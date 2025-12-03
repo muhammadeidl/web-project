@@ -1,0 +1,139 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model FitnessCenter.Models.Gym
+
+<div class="d-flex justify-content-center align-items-start vh-100"
+     style="background: linear-gradient(to bottom, #6a11cb, #2575fc); padding-top: 100px;">
+
+    <div class="card shadow-lg border-0"
+         style="width: 100%; max-width: 850px; border-radius: 20px; overflow: hidden;">
+
+        <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0">Edit Gym</h3>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="post" asp-controller="Gym" asp-action="Edit">
+
+                <input type="hidden" asp-for="GymId" />
+
+                <!-- Name -->
+                <div class="mb-4">
+                    <label asp-for="Name" class="form-label fw-bold">Name</label>
+                    <input type="text" asp-for="Name" class="form-control shadow-sm rounded-pill" required />
+                </div>
+
+                <!-- Location -->
+                <div class="mb-4">
+                    <label asp-for="Location" class="form-label fw-bold">Location</label>
+                    <input type="text" asp-for="Location" class="form-control shadow-sm rounded-pill" required />
+                </div>
+
+
+                <h4 class="mt-4 text-light fw-bold">Working Hours</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered shadow-sm rounded bg-white">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Day</th>
+                                <th>Closed</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                var day = (FitnessCenter.Models.DayOfWeek)i;
+                                var wh = Model.WorkingHours.FirstOrDefault(x => x.DayOfWeek == day)
+                                ?? new FitnessCenter.Models.GymWorkingHours { DayOfWeek = day };
+
+                                <tr>
+
+                                    <!-- ID gönderilmeli -->
+                                    <input type="hidden" name="WorkingHours[@i].Id" value="@wh.Id" />
+
+                                    <!-- Gün -->
+                                    <td class="align-middle">
+                                        <input type="hidden" name="WorkingHours[@i].DayOfWeek" value="@day" />
+                                        <strong>@day</strong>
+                                    </td>
+
+                                    <!-- Hidden false + checkbox -->
+                                    <td class="text-center align-middle">
+                                        <input type="hidden" name="WorkingHours[@i].IsClosed" value="false" />
+                                        <input type="checkbox"
+                                               name="WorkingHours[@i].IsClosed"
+                                               id="closed-@i"
+                                               value="true"
+                                               @(wh.IsClosed ? "checked" : "")
+                                               onclick="toggleEditDay(@i)" />
+                                    </td>
+
+                                    <!-- Start -->
+                                    <td>
+                                        <input type="time"
+                                               id="startTime-@i"
+                                               name="WorkingHours[@i].StartTime"
+                                               value="@(wh.StartTime?.ToString(@"hh\:mm") ?? "")"
+                                               class="form-control"
+                                               @(wh.IsClosed ? "readonly" : "") />
+                                    </td>
+
+                                    <!-- End -->
+                                    <td>
+                                        <input type="time"
+                                               id="endTime-@i"
+                                               name="WorkingHours[@i].EndTime"
+                                               value="@(wh.EndTime?.ToString(@"hh\:mm") ?? "")"
+                                               class="form-control"
+                                               @(wh.IsClosed ? "readonly" : "") />
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="submit" class="btn btn-lg text-white"
+                            style="background: #6a11cb; border-radius: 30px; padding: 10px 30px;">
+                        Save Changes
+                    </button>
+
+                    <a href="/Gym/Index" class="btn btn-lg text-white"
+                       style="background: #2575fc; border-radius: 30px; padding: 10px 30px;">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Start/End readonly kontrolü
+        function toggleEditDay(i) {
+            const closed = document.getElementById(`closed-${i}`).checked;
+
+            const start = document.getElementById(`startTime-${i}`);
+            const end = document.getElementById(`endTime-${i}`);
+
+            start.readOnly = closed;
+            end.readOnly = closed;
+
+            if (closed) {
+                start.value = "";
+                end.value = "";
+            }
+        }
+    </script>
+}

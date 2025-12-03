@@ -1,0 +1,72 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+}
+@model FitnessCenter.Models.Gym
+
+<div class="d-flex justify-content-center align-items-center vh-100" style="background: linear-gradient(to bottom, #ff7e5f, #feb47b);">
+    <div class="card shadow-lg border-0" style="width: 100%; max-width: 600px; border-radius: 20px; overflow: hidden;">
+        <div class="card-header bg-danger text-white text-center">
+            <h3 class="mb-0">Delete Gym</h3>
+        </div>
+        <div class="card-body p-4">
+            <div class="alert alert-warning text-center mb-4">
+                <strong>Are you sure you want to delete the following Gym?</strong>
+                <p class="mb-0">This action cannot be undone.</p>
+            </div>
+            <table class="table table-borderless text-center mb-4">
+                <tr>
+                    <th class="text-muted">Name</th>
+                    <td>@Model.Name</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Location</th>
+                    <td>@Model.Location</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Working Hours</th>
+                    <td>
+                        @if (Model.WorkingHours != null && Model.WorkingHours.Any())
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var wh in Model.WorkingHours.OrderBy(x => x.DayOfWeek))
+                                {
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>@wh.DayOfWeek</span>
+
+                                        @if (wh.IsClosed)
+                                        {
+                                            <span class="text-danger fw-bold">Closed</span>
+                                        }
+                                        else
+                                        {
+                                            <span>
+                                                @(wh.StartTime.HasValue? wh.StartTime.Value.ToString(@"hh\:mm") : "")
+                                                -
+                                                @(wh.EndTime.HasValue? wh.EndTime.Value.ToString(@"hh\:mm") : "")
+                                            </span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <span class="text-muted fst-italic">Not specified</span>
+                        }
+                    </td>
+
+                </tr>
+            </table>
+            <form method="post" asp-action="Delete" asp-route-id="@Model.GymId" class="text-center">
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="submit" class="btn btn-lg text-white" style="background: #d9534f; border: none; border-radius: 30px; padding: 10px 30px;">
+                        Delete
+                    </button>
+                    <a href="/Gym/Index" class="btn btn-lg text-white" style="background: #5bc0de; border: none; border-radius: 30px; padding: 10px 30px;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

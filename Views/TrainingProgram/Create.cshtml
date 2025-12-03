@@ -1,0 +1,47 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model FitnessCenter.Models.TrainingProgram
+
+<div class="d-flex justify-content-center align-items-start vh-100" style="background: linear-gradient(to bottom, #e0c3fc, #8ec5fc); padding-top: 100px;">
+    <div class="card shadow-lg border-0" style="width: 100%; max-width: 700px; border-radius: 20px; overflow: hidden;">
+        <div class="card-header bg-info text-white text-center">
+            <h3 class="mb-0">Add Training Program</h3>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" asp-controller="TrainingProgram" asp-action="Create" class="needs-validation" novalidate>
+                <div class="mb-4">
+                    <label asp-for="Name" class="form-label fw-bold">Name</label>
+                    <input type="text" asp-for="Name" class="form-control rounded-pill shadow-sm" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Price" class="form-label fw-bold">Price</label>
+                    <input type="number" asp-for="Price" step="0.01" class="form-control rounded-pill shadow-sm" required />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Duration" class="form-label fw-bold">Duration (minutes)</label>
+                    <input type="number" asp-for="Duration" class="form-control rounded-pill shadow-sm" required />
+                    <span asp-validation-for="Duration" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="GymId" class="form-label fw-bold">Gym</label>
+                    <select asp-for="GymId" class="form-select rounded-pill shadow-sm" asp-items="ViewBag.Gyms">
+                        <option value="">-- Select a Gym --</option>
+                    </select>
+                    <span asp-validation-for="GymId" class="text-danger"></span>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-lg btn-success rounded-pill px-5 shadow-sm me-3">Save</button>
+                    <a href="/TrainingProgram" class="btn btn-lg btn-secondary rounded-pill px-5 shadow-sm">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

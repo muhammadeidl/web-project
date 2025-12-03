@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using FitnessCenter.Models
+@model IEnumerable<FitnessCenter.Models.Appointment>
+
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 50px; font-family: 'Arial', sans-serif;">
+    <h2 style="font-size: 36px; font-weight: bold; color: #4A90E2; text-align: center; margin-bottom: 30px;">Your Booked Appointments</h2>
+
+    <a asp-controller="Appointment" asp-action="Create"
+       style="background-color: #4A90E2; color: white; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 12px; display: inline-block; transition: background-color 0.3s ease; margin-bottom: 20px;">
+        Add New Appointment
+    </a>
+
+    <div style="overflow-x: auto; width: 90%;">
+        <table id="appointmentsTable" style="width: 100%; border-collapse: collapse; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;">
+            <thead>
+                <tr style="background-color: #4A90E2; color: white;">
+                    <th style="padding: 10px;">Appointment ID</th>
+                    <th style="padding: 10px;">Date & Time</th>
+                    <th style="padding: 10px;">Program Name</th>
+                    <th style="padding: 10px;">Coach Name</th>
+                    <th style="padding: 10px;">Status</th>
+                    <th style="padding: 10px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var appointment in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #ddd; text-align: center;">
+                            <td style="padding: 10px;">@appointment.AppointmentId</td>
+                            <td style="padding: 10px;">@appointment.AppointmentDate.ToString("g")</td>
+                            <td style="padding: 10px;">@(appointment.TrainingProgram?.Name ?? "N/A")</td>
+                            <td style="padding: 10px;">@(appointment.Coach?.Name ?? "N/A")</td>
+                            <td style="padding: 10px;">@appointment.Status</td>
+                            <td style="padding: 10px;">
+                                <a href="/Appointment/Delete/@appointment.AppointmentId" style="background-color: #D0021B; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; text-decoration: none;">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr style="text-align: center;"><td colspan="6" style="padding: 20px; color: #888;">No appointments found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
