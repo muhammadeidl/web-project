@@ -1,6 +1,8 @@
 ﻿using FitnessCenter.Models;
 using Microsoft.AspNetCore.Mvc;
 
+
+
 namespace FitnessCenter.Controllers
 {
     public class HomeController : Controller
