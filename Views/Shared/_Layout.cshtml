@@ -70,22 +70,22 @@
                 <ul class="navbar-nav ms-auto" style="color:aliceblue">
                     @if (User?.Identity?.IsAuthenticated == true)
                     {
+                        @if (User.IsInRole("ADMIN") || User.IsInRole("admin"))
+                        {
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-light" asp-controller="Admin" asp-action="Index"><i></i>admin dahsboard</a>
+                            </li>
+                        }
+
+                        <li class="nav-item me-2">
+                            <a class="btn btn-outline-light" asp-controller="Appointment" asp-action="Index"><i></i>Start Training</a>
+                        </li>
                         <li class="nav-item me-2" style="color:aliceblue">
                             <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline" style="color:aliceblue">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-logout"><i class="fas fa-sign-out-alt me-2" style="color:aliceblue"></i>Logout</button>
                             </form>
                         </li>
-
-
-
-                        @if (User.IsInRole("ADMIN") || User.IsInRole("admin"))
-                                {
-                            <li class="nav-item me-2">
-                                <a class="btn btn-outline-light" asp-controller="Admin" asp-action="Index"><i></i>admin dahsboard</a>
-                            </li>
-                        }
-
 
 
                     }
