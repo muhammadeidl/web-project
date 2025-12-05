@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<FitnessCenter.Models.User> SignInManager
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8" />
@@ -53,7 +55,7 @@
             <a class="navbar-brand" href="@Url.Action("Index", "Home")">
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24"><path d="M6 5h12v2H6zm0 12h12v2H6zM3 8h18v8H3zm2 2v4h14v-4z" /></svg>
                 Iron<span class="text-warning">Fit</span>
-            </a>            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            </a>            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="#navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -65,10 +67,37 @@
                         <a class="nav-link" href="@Url.Action("Index", "Ai")"><i class="fas fa-brain me-2"></i>AI Body Architect</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light" href="@Url.Action("login", "User")"><i class="fas fa-user-lock me-2"></i>Login</a>
-                    </li>
+                <ul class="navbar-nav ms-auto" style="color:aliceblue">
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item me-2" style="color:aliceblue">
+                            <form method="post" asp-area="Identity" asp-page="/Account/Logout" class="d-inline" style="color:aliceblue">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-logout"><i class="fas fa-sign-out-alt me-2" style="color:aliceblue"></i>Logout</button>
+                            </form>
+                        </li>
+
+
+
+                        @if (User.IsInRole("ADMIN") || User.IsInRole("admin"))
+                                {
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-light" asp-controller="Admin" asp-action="Index"><i></i>admin dahsboard</a>
+                            </li>
+                        }
+
+
+
+                    }
+                    else
+                    {
+                        <li class="nav-item me-2">
+                            <a class="btn btn-outline-light" asp-area="Identity" asp-page="/Account/Register"><i class="fas fa-user-plus me-2"></i>Register</a>
+                        </li>
+                        <li class="nav-item me-2">
+                            <a class="btn btn-outline-light" asp-area="Identity" asp-page="/Account/Login"><i class="fas fa-user-lock me-2"></i>Login</a>
+                        </li>
+                    }
                 </ul>
             </div>
         </div>

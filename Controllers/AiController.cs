@@ -1,11 +1,13 @@
 ﻿using FitnessCenter.Controllers;
 using FitnessCenter.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace FitnessCenter.Controllers
 {
+    [Authorize(Roles = "VISITOR")]
     public class AiController : Controller
     {
         private const string ApiUrl = "https://hairstyle-changer.p.rapidapi.com/huoshan/facebody/hairstyle";

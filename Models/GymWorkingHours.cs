@@ -19,6 +19,6 @@
         public TimeSpan? EndTime { get; set; }
         public bool IsClosed { get; set; }
         public int GymId { get; set; }
-        public Gym Gym { get; set; }
+        public Gym ?Gym { get; set; }
     }
 }

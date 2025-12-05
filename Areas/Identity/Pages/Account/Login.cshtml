@@ -1,0 +1,217 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-md-4">
+        <section>
+            <form id="account" method="post">
+                <h2>Use a local account to log in.</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <label asp-for="Input.Email" class="form-label">Email</label>
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="checkbox mb-3">
+                    <label asp-for="Input.RememberMe" class="form-label">
+                        <input class="form-check-input" asp-for="Input.RememberMe" />
+                        @Html.DisplayNameFor(m => m.Input.RememberMe)
+                    </label>
+                </div>
+                <div>
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                </div>
+                <div>
+                    <p>
+                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                    </p>
+                    <p>
+                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
+                    </p>
+                    <p>
+                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+                    </p>
+                </div>
+            </form>
+        </section>
+    </div>
+  
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+
+
+
+<style>
+    /*
+    ===================================
+    1. General Setup & Dark Theme
+    ===================================
+    */
+    body {
+        background-color: #121212; /* خلفية داكنة جداً */
+        color: #e0e0e0; /* لون النص الأساسي الفاتح */
+        font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        transition: background-color 0.3s;
+    }
+
+    h1 {
+        color: #ffffff; /* عنوان أبيض واضح */
+        margin-bottom: 2rem;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+    /*
+    ===================================
+    2. Card and Layout Styling
+    ===================================
+    */
+    .row {
+        justify-content: center;
+        align-items: center; /* توسيط رأسي */
+        margin-top: 3rem;
+        min-height: 80vh; /* لجعل الـ Row تملأ معظم الشاشة */
+    }
+
+    /* 2.1. Main Login Card (Left Side) */
+    .col-md-4 {
+        /* تأثير بطاقة داكنة مع تظليل عميق */
+        background-color: rgba(24, 24, 24, 0.95); /* خلفية شبه شفافة داكنة */
+        border: 1px solid #333333;
+        border-radius: 1rem; /* زوايا مستديرة أكبر */
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* تظليل ثلاثي الأبعاد */
+    }
+
+    h2 {
+        color: #bb86fc; /* لون مميز عصري (أرجواني فاتح) */
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #333333;
+        font-weight: 500;
+    }
+
+    /* 2.2. External Login Section (Right Side) */
+    .col-md-6.col-md-offset-2 {
+        /* استخدام تأثير الزجاج الضبابي (Glassmorphism) */
+        background: rgba(255, 255, 255, 0.05); /* شفافية خفيفة جداً */
+        backdrop-filter: blur(5px); /* تأثير الضبابية */
+        -webkit-backdrop-filter: blur(5px);
+        border-left: none; /* إزالة الخط الفاصل الصلب */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        padding: 2.5rem;
+        margin-right: 1rem; /* إزاحة طفيفة بين البطاقتين */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    h3 {
+        color: #e0e0e0;
+        font-size: 1.1rem;
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-weight: 400;
+    }
+
+    /*
+    ===================================
+    3. Form Elements (Inputs & Buttons)
+    ===================================
+    */
+
+    /* 3.1. Input Fields */
+    .form-floating > .form-control {
+        background-color: #1e1e1e; /* خلفية أغمق للخانة */
+        color: #ffffff;
+        border: 1px solid #333333;
+        border-radius: 0.5rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-floating > label {
+        color: #a0a0a0; /* لون فاتح لتسمية الحقل */
+    }
+
+    .form-floating > .form-control:focus {
+        background-color: #1e1e1e;
+        border-color: #03dac6; /* لون مميز ثانوي (أخضر فاتح/تركوازي) */
+        box-shadow: 0 0 0 0.25rem rgba(3, 218, 198, 0.25);
+    }
+
+    /* 3.2. Primary Button */
+    #login-submit {
+        background-color: #bb86fc; /* استخدام اللون المميز الأرجواني */
+        border-color: #bb86fc;
+        color: #000000; /* نص أسود لتباين عالٍ */
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+        #login-submit:hover {
+            background-color: #aa74e8;
+            transform: translateY(-2px); /* تأثير رفع خفيف عند التحويم */
+        }
+
+    /* 3.3. External Buttons */
+    #external-account button {
+        background-color: #333333;
+        border-color: #444444;
+        color: #e0e0e0;
+        font-weight: 500;
+        border-radius: 0.3rem;
+        min-width: 180px;
+        margin: 0.5rem 0.25rem;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+        #external-account button:hover {
+            background-color: #444444;
+            border-color: #555555;
+        }
+
+    /* 3.4. Links and Checkbox */
+    p a, #resend-confirmation {
+        color: #03dac6; /* استخدام اللون المميز الثانوي للروابط */
+        text-decoration: none;
+        font-weight: 400;
+        transition: color 0.15s;
+    }
+
+        p a:hover, #resend-confirmation:hover {
+            color: #01a396;
+            text-decoration: underline;
+        }
+
+    /* Validation and Error Styling */
+    .text-danger:not([role="alert"]) {
+        color: #ff5252 !important; /* لون أحمر عصري للأخطاء */
+    }
+
+    .text-danger[role="alert"] {
+        background-color: rgba(255, 82, 82, 0.1);
+        color: #ff5252;
+        border: 1px solid #ff5252;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+</style>                             

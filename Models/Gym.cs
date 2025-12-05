@@ -7,10 +7,10 @@ namespace FitnessCenter.Models
         public int GymId { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
-        public string Location { get; set; }
+        public string? Location { get; set; }
 
         public ICollection<Coach> Coaches { get; set; } = new List<Coach>();
         public ICollection<TrainingProgram> TrainingPrograms { get; set; } = new List<TrainingProgram>();

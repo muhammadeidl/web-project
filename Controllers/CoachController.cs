@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace FitnessCenter.Controllers
 {
-    [Authorize(Roles = "admin")]
     public class CoachController : Controller
     {
         private readonly SporSalonuDbContext _context;
@@ -23,6 +23,8 @@ namespace FitnessCenter.Controllers
         // ===========================
         //  LIST ALL COACHES
         // ===========================
+        [Authorize(Roles = "admin")]
+
         public IActionResult Index()
         {
             var coaches = _context.Coaches

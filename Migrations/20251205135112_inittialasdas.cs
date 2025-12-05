@@ -3,19 +3,16 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Hairdresser_Website.Migrations
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace FitnessCenter.Migrations
 {
-    public partial class IdentityFix : Migration
+    /// <inheritdoc />
+    public partial class inittialasdas : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Appointments_Users_UserId",
-                table: "Appointments");
-
-            migrationBuilder.DropTable(
-                name: "Users");
-
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -55,6 +52,35 @@ namespace Hairdresser_Website.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Gyms",
+                columns: table => new
+                {
+                    GymId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Gyms", x => x.GymId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UnavailableSlots",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CoachId = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UnavailableSlots", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -163,6 +189,153 @@ namespace Hairdresser_Website.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Coaches",
+                columns: table => new
+                {
+                    CoachId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Expertise = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GymId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Coaches", x => x.CoachId);
+                    table.ForeignKey(
+                        name: "FK_Coaches_Gyms_GymId",
+                        column: x => x.GymId,
+                        principalTable: "Gyms",
+                        principalColumn: "GymId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GymWorkingHours",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DayOfWeek = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: true),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: true),
+                    IsClosed = table.Column<bool>(type: "bit", nullable: false),
+                    GymId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GymWorkingHours", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GymWorkingHours_Gyms_GymId",
+                        column: x => x.GymId,
+                        principalTable: "Gyms",
+                        principalColumn: "GymId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TrainingPrograms",
+                columns: table => new
+                {
+                    TrainingProgramId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Duration = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    GymId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TrainingPrograms", x => x.TrainingProgramId);
+                    table.ForeignKey(
+                        name: "FK_TrainingPrograms_Gyms_GymId",
+                        column: x => x.GymId,
+                        principalTable: "Gyms",
+                        principalColumn: "GymId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CoachAvailability",
+                columns: table => new
+                {
+                    CoachAvailabilityId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DayOfWeek = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    CoachId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CoachAvailability", x => x.CoachAvailabilityId);
+                    table.ForeignKey(
+                        name: "FK_CoachAvailability_Coaches_CoachId",
+                        column: x => x.CoachId,
+                        principalTable: "Coaches",
+                        principalColumn: "CoachId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Appointments",
+                columns: table => new
+                {
+                    AppointmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AppointmentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    TrainingProgramId = table.Column<int>(type: "int", nullable: false),
+                    CoachId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Appointments", x => x.AppointmentId);
+                    table.ForeignKey(
+                        name: "FK_Appointments_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Appointments_Coaches_CoachId",
+                        column: x => x.CoachId,
+                        principalTable: "Coaches",
+                        principalColumn: "CoachId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Appointments_TrainingPrograms_TrainingProgramId",
+                        column: x => x.TrainingProgramId,
+                        principalTable: "TrainingPrograms",
+                        principalColumn: "TrainingProgramId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "b1a6f6a2-4e2d-4e2a-9f1a-111111111111", "b1a6f6a2-4e2d-4e2a-9f1a-111111111111", "admin", "ADMIN" },
+                    { "c2b7f7b3-5f3e-5f3b-0a2b-222222222222", "c2b7f7b3-5f3e-5f3b-0a2b-222222222222", "visitor", "VISITOR" }
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_CoachId",
+                table: "Appointments",
+                column: "CoachId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_TrainingProgramId",
+                table: "Appointments",
+                column: "TrainingProgramId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_UserId",
+                table: "Appointments",
+                column: "UserId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -202,20 +375,32 @@ namespace Hairdresser_Website.Migrations
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Appointments_AspNetUsers_UserId",
-                table: "Appointments",
-                column: "UserId",
-                principalTable: "AspNetUsers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.CreateIndex(
+                name: "IX_CoachAvailability_CoachId",
+                table: "CoachAvailability",
+                column: "CoachId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Coaches_GymId",
+                table: "Coaches",
+                column: "GymId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GymWorkingHours_GymId",
+                table: "GymWorkingHours",
+                column: "GymId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TrainingPrograms_GymId",
+                table: "TrainingPrograms",
+                column: "GymId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Appointments_AspNetUsers_UserId",
-                table: "Appointments");
+            migrationBuilder.DropTable(
+                name: "Appointments");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -233,33 +418,28 @@ namespace Hairdresser_Website.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CoachAvailability");
+
+            migrationBuilder.DropTable(
+                name: "GymWorkingHours");
+
+            migrationBuilder.DropTable(
+                name: "UnavailableSlots");
+
+            migrationBuilder.DropTable(
+                name: "TrainingPrograms");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
 
-            migrationBuilder.CreateTable(
-                name: "Users",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.UserId);
-                });
+            migrationBuilder.DropTable(
+                name: "Coaches");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Appointments_Users_UserId",
-                table: "Appointments",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "UserId",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.DropTable(
+                name: "Gyms");
         }
     }
 }

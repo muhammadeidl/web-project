@@ -1,0 +1,190 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <h2>Create a new account.</h2>
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <label asp-for="Input.Email">Email</label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.Password">Password</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </form>
+    </div>
+  
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+
+<style>
+    /*
+    ===================================
+    1. General Setup & Dark Theme
+    ===================================
+    */
+    body {
+        background-color: #121212; /* خلفية داكنة جداً */
+        color: #e0e0e0; /* لون النص الأساسي الفاتح */
+        font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        transition: background-color 0.3s;
+    }
+
+    h1 {
+        color: #ffffff; /* عنوان أبيض واضح */
+        margin-bottom: 2rem;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+    /*
+    ===================================
+    2. Card and Layout Styling
+    ===================================
+    */
+    .row {
+        justify-content: center;
+        align-items: center;
+        margin-top: 3rem;
+        min-height: 80vh;
+    }
+
+    /* 2.1. Main Registration Card (Left Side) */
+    .col-md-4 {
+        /* تأثير بطاقة داكنة مع تظليل عميق */
+        background-color: rgba(24, 24, 24, 0.95);
+        border: 1px solid #333333;
+        border-radius: 1rem;
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    h2 {
+        color: #bb86fc; /* لون مميز عصري (أرجواني فاتح) */
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #333333;
+        font-weight: 500;
+    }
+
+    /* 2.2. External Login Section (Right Side) */
+    .col-md-6.col-md-offset-2 {
+        /* استخدام تأثير الزجاج الضبابي (Glassmorphism) */
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border-left: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        padding: 2.5rem;
+        margin-right: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    h3 {
+        color: #e0e0e0;
+        font-size: 1.1rem;
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-weight: 400;
+    }
+
+    /*
+    ===================================
+    3. Form Elements (Inputs & Buttons)
+    ===================================
+    */
+
+    /* 3.1. Input Fields */
+    .form-floating > .form-control {
+        background-color: #1e1e1e;
+        color: #ffffff;
+        border: 1px solid #333333;
+        border-radius: 0.5rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-floating > label {
+        color: #a0a0a0;
+    }
+
+    .form-floating > .form-control:focus {
+        background-color: #1e1e1e;
+        border-color: #03dac6; /* لون مميز ثانوي (أخضر فاتح/تركوازي) */
+        box-shadow: 0 0 0 0.25rem rgba(3, 218, 198, 0.25);
+    }
+
+    /* 3.2. Primary Button (Register) */
+    #registerSubmit {
+        background-color: #bb86fc; /* اللون المميز الأرجواني */
+        border-color: #bb86fc;
+        color: #000000;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+        #registerSubmit:hover {
+            background-color: #aa74e8;
+            transform: translateY(-2px);
+        }
+
+    /* 3.3. External Buttons */
+    #external-account button {
+        background-color: #333333;
+        border-color: #444444;
+        color: #e0e0e0;
+        font-weight: 500;
+        border-radius: 0.3rem;
+        min-width: 180px;
+        margin: 0.5rem 0.25rem;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+        #external-account button:hover {
+            background-color: #444444;
+            border-color: #555555;
+        }
+
+    /* Validation and Error Styling */
+    .text-danger:not([role="alert"]) {
+        color: #ff5252 !important; /* لون أحمر عصري للأخطاء */
+    }
+
+    .text-danger[role="alert"] {
+        background-color: rgba(255, 82, 82, 0.1);
+        color: #ff5252;
+        border: 1px solid #ff5252;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Media Query for Responsiveness */
+    
+</style>

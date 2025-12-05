@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FitnessCenter.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace FitnessCenter.Models
 {
@@ -10,7 +13,7 @@ namespace FitnessCenter.Models
 
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
         [Range(1, 1440)] 
@@ -23,6 +26,6 @@ namespace FitnessCenter.Models
 
         [Required]
         public int GymId { get; set; }
-        public Gym Gym { get; set; }
+        public Gym ?Gym { get; set; }
     }
 }

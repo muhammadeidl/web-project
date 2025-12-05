@@ -8,7 +8,6 @@ using System.Security.Claims;
 
 namespace FitnessCenter.Controllers
 {
-    [Authorize]
     public class AppointmentController : Controller
     {
         private readonly SporSalonuDbContext _context;
@@ -20,7 +19,6 @@ namespace FitnessCenter.Controllers
 
         // ------------------ إجراءات خاصة بالإدمن فقط ------------------
 
-        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Index()
         {
             var appointments = await _context.Appointments
@@ -31,7 +29,6 @@ namespace FitnessCenter.Controllers
             return View(appointments);
         }
 
-        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var appointment = await _context.Appointments.FindAsync(id);
@@ -46,7 +43,6 @@ namespace FitnessCenter.Controllers
             return View(appointment);
         }
 
-        [Authorize(Roles = "admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Appointment appointment)
@@ -147,11 +143,8 @@ namespace FitnessCenter.Controllers
 
         public IActionResult Create()
         {
-            string userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Create", "Appointment") });
-            }
+            string? userId = User.FindFirstValue("UserId");
+
 
             ViewBag.Gyms = new SelectList(_context.Gyms, "GymId", "Name");
 

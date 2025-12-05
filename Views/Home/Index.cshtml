@@ -83,7 +83,7 @@
         <div class="container position-relative">
             <h1 class="display-3 fw-bold text-uppercase">Build Your Dream Physique..</h1>
             <p class="lead fs-4 mb-4">Join the city's premier fitness center suitable for all levels.</p>
-            <a href="#about" class="btn btn-warning btn-lg text-white fw-bold px-5 rounded-pill">Join Now!</a>
+            <a asp-controller="Appointment" asp-action="Index" class="btn btn-warning btn-lg text-white fw-bold px-5 rounded-pill">Join Now!</a>
         </div>
     </section>
 
@@ -102,7 +102,7 @@
                         <h5 class="fw-bold m-0">Opening Hours:</h5>
                         <p class="m-0 text-muted">Daily: 06:00 am - 11:00 pm</p>
                     </div>
-                    <a href="@Url.Action("Login", "User")" class="btn btn-dark btn-lg px-4 rounded-pill">Start Training</a>
+                    <a asp-controller="Appointment" asp-action="Index" class="btn btn-dark btn-lg px-4 rounded-pill">Start Training</a>
                 </div>
             </div>
         </div>

@@ -3,8 +3,8 @@
     public class Coach
     {
         public int CoachId { get; set; }
-        public string Name { get; set; }
-        public string Expertise { get; set; } 
+        public string? Name { get; set; }
+        public string? Expertise { get; set; } 
 
         public int GymId { get; set; }
         public Gym? Gym { get; set; }

@@ -1,0 +1,39 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<link rel="stylesheet" href="/css/auth.css" />
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Welcome back</h2>
+        <form method="post" class="auth-form">
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control" type="password" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                    <label asp-for="Input.RememberMe" class="form-check-label"></label>
+                </div>
+                <a asp-page="/Register">Create account</a>
+            </div>
+
+            <div class="auth-actions">
+                <button type="submit" class="btn-auth-primary">Sign in</button>
+                <a asp-page="/Register" class="btn-auth-outline">Register</a>
+            </div>
+
+            <div class="auth-footer">Forgot your password? <a asp-page="/ForgotPassword">Reset</a></div>
+        </form>
+    </div>
+</div>

@@ -18,12 +18,12 @@
         public AppointmentStatus Status { get; set; } 
 
         public int TrainingProgramId { get; set; }
-        public TrainingProgram TrainingProgram { get; set; }
+        public TrainingProgram ?TrainingProgram { get; set; }
 
         public int CoachId { get; set; }
-        public Coach Coach { get; set; }
+        public Coach ?Coach { get; set; }
 
-        public string UserId { get; set; }
-        public User User { get; set; }
+        public string ?UserId { get; set; }
+        public User ?User { get; set; }
     }
 }

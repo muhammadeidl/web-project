@@ -16,6 +16,6 @@ namespace FitnessCenter.Models
         public TimeSpan EndTime { get; set; }
 
         public int CoachId { get; set; }
-        public Coach Coach { get; set; }
+        public Coach? Coach { get; set; }
     }
 }
