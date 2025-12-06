@@ -1,4 +1,5 @@
-﻿namespace FitnessCenter.Models
+
+namespace FitnessCenter.Models
 {
     public class Ai
     {
