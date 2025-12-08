@@ -19,6 +19,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true; 
     });
 
+/*
+
+
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+   
+    options.LoginPath = "/User/Login"; 
+
+    options.AccessDeniedPath = "/User/AccessDenied"; 
+    
+    options.LogoutPath = "/User/Logout";
+    
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.SlidingExpiration = true;
+});
+
+*/
+
+
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
