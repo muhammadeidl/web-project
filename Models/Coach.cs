@@ -1,5 +1,5 @@
 ﻿namespace FitnessCenter.Models
-{
+ {
     public class Coach
     {
         public int CoachId { get; set; }
