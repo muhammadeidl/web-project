@@ -1,97 +1,80 @@
-﻿using FitnessCenter.Controllers;
 using FitnessCenter.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 
 namespace FitnessCenter.Controllers
 {
     public class AiController : Controller
     {
-        private const string ApiUrl = "https://hairstyle-changer.p.rapidapi.com/huoshan/facebody/hairstyle";
-        private const string ApiKey = "51b7015574mshd6b5841268bf01ep1d9965jsn1013881d884d";
-        private const string ApiHost = "hairstyle-changer.p.rapidapi.com";
-
+        private readonly string apiKey = "yazacagim-sonra"; 
         [HttpGet]
         public IActionResult Index()
         {
-            return View();
+            return View(new AiModel());
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProcessImage(Ai request)
+        public async Task<IActionResult> Index(AiModel model)
         {
-            if (request.Image == null || request.Image.Length == 0)
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Please upload a valid image.";
-                return RedirectToAction("Index");
+                ModelState.AddModelError("", "doldurcagim");
+                return View(model);
             }
 
-            var hairTypes = new List<int> { 401, 403, 201 };
-            var editedImages = new List<string>();
-
-            using (var client = new HttpClient())
+            try
             {
-                foreach (var hairType in hairTypes)
-                {
-                    var formData = new MultipartFormDataContent();
-
-                    var fileContent = new StreamContent(request.Image.OpenReadStream());
-                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(request.Image.ContentType);
-                    formData.Add(fileContent, "image_target", request.Image.FileName);
-
-                    formData.Add(new StringContent(hairType.ToString()), "hair_type");
-
-                    var requestMessage = new HttpRequestMessage
-                    {
-                        Method = HttpMethod.Post,
-                        RequestUri = new Uri(ApiUrl),
-                        Headers =
-                        {
-                            { "x-rapidapi-key", ApiKey },
-                            { "x-rapidapi-host", ApiHost },
-                        },
-                        Content = formData
-                    };
-
-                    try
-                    {
-                        var response = await client.SendAsync(requestMessage);
-                        var responseBody = await response.Content.ReadAsStringAsync();
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var result = JsonSerializer.Deserialize<JsonElement>(responseBody);
-
-                            if (result.TryGetProperty("data", out var data) &&
-                                data.TryGetProperty("image", out var editedImage))
-                            {
-                                editedImages.Add(editedImage.GetString());
-                            }
-                            else
-                            {
-                                TempData["Error"] = "Failed to process the image. Invalid response format.";
-                                return RedirectToAction("Index");
-                            }
-                        }
-                        else
-                        {
-                            TempData["Error"] = $"API Error: {responseBody}";
-                            return RedirectToAction("Index");
-                        }
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        TempData["Error"] = $"Request Failed: {ex.Message}";
-                        return RedirectToAction("Index");
-                    }
-                }
+                model.AiResponse = await GeneratePlan(model);
+            }
+            catch (Exception ex)
+            {
+                model.AiResponse = "yanlis durumunda: " + ex.Message;
             }
 
-            ViewData["EditedImages"] = editedImages;
-
-            return View("Index");
+            return View(model);
         }
 
+        private async Task<string> GeneratePlan(AiModel model)
+        {
+            using var client = new HttpClient();
+
+            // ملف AiController.cs
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
+
+            string prompt =
+                $"yas: {model.Age}\n" +
+                $"kilo: {model.Weight} كجم\n" +
+                $"boy: {model.Height} سم\n" +
+                $"gender: {model.Gender}\n" +
+                $"hedef: {model.Goal}\n\n" +
+                "give me plane";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new { parts = new[] { new { text = prompt } } }
+                }
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync(url, content);
+
+            string responseText = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                return " yanlis API buradan: " + responseText;
+
+            var doc = JsonDocument.Parse(responseText);
+
+            return doc.RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString()!;
+        }
     }
 }
