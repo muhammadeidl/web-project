@@ -40,10 +40,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 
+// Authorization Policies (Optional)
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
+    // Remove global FallbackPolicy that caused redirect loops for Identity pages
+    // Keep role-based policies
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+    options.AddPolicy("visitorOnly", policy => policy.RequireRole("visitor"));
 });
 
 var app = builder.Build();
