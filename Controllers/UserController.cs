@@ -108,8 +108,8 @@ namespace FitnessCenter.Controllers
                 return RedirectToAction("Login");
             }
 
-            // جلب بيانات المواعيد للمستخدم الحالي فقط وتضمين البرامج والمدربين
-            var userAppointments = await _context.Appointments
+    // Yalnızca mevcut kullanıcı için randevu verilerini getir ve programlar ile eğitmenleri dahil et
+        var userAppointments = await _context.Appointments
                 .Include(a => a.TrainingProgram)
                 .Include(a => a.Coach)
                 .Where(a => a.UserId == currentUserId) // If Appointment.UserId refers to User.Id, this is correct.
