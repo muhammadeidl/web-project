@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using FitnessCenter.Data;
 using FitnessCenter.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FitnessCenter.Controllers
 {
+    //[Authorize(Roles = "VISITOR")]
+    [Authorize(Roles = "visitor")]
+
     [Route("api/[controller]")]
     [ApiController]
     public class APIController : ControllerBase
