@@ -1,47 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Hairstyle Changer";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
-@model Ai
+@model FitnessCenter.Models.AiModel
 
-<div class="container mt-5 d-flex justify-content-center align-items-center vh-100" style="background: linear-gradient(to right, #8360c3, #2ebf91);">
-    <div class="card shadow-lg border-0" style="width: 100%; max-width: 900px; border-radius: 20px; overflow: hidden;">
-         <div class="card-header text-white text-center" style="background: #2ebf91;">
-            <h2 class="mb-0">Hairstyle Changer</h2>
-            <p class="text-muted">Upload an image to try different hairstyles!</p>
+@{
+    ViewData["Title"] = "AI Body Architect";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fa fa-robot"></i> AI Antrenör</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Index" method="post">
+                        <div class="mb-3">
+                            <label>Yaş</label>
+                            <input asp-for="Age" class="form-control" type="number" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Kilo (kg)</label>
+                            <input asp-for="Weight" class="form-control" type="number" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Boy (cm)</label>
+                            <input asp-for="Height" class="form-control" type="number" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Cinsiyet</label>
+                            <select asp-for="Gender" class="form-select">
+                                <option value="Erkek">Erkek</option>
+                                <option value="Kadın">Kadın</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Spor Hedefiniz</label>
+                            <input asp-for="Goal"
+                                   class="form-control"
+                                   placeholder="Örn: Kilo vermek, kas yapmak..."
+                                   required />
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            Planı Al
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="card-body p-5">
-            @if (TempData["Error"] != null)
+
+        <div class="col-md-8">
+            @if (!string.IsNullOrEmpty(Model.AiResponse))
             {
-                <div class="alert alert-danger text-center">
-                    @TempData["Error"]
+                <div class="card shadow border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4>Önerilen Planınız</h4>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p style="white-space: pre-line; font-size: 1.1em; line-height: 1.6;">
+                            @Model.AiResponse
+                        </p>
+                    </div>
                 </div>
             }
-
-            <form asp-action="ProcessImage" method="post" enctype="multipart/form-data">
-                <div class="mb-4">
-                    <label for="image" class="form-label fw-bold">Choose an Image</label>
-                    <input type="file" name="Image" id="image" class="form-control shadow" required />
-                </div>
-                <div class="d-flex justify-content-center">
-                    <button type="submit" class="btn btn-lg text-white" style="background: #8360c3; border: none; border-radius: 30px; padding: 10px 30px;">Submit</button>
-                </div>
-            </form>
-
-            @if (ViewData["EditedImages"] != null)
+            else
             {
-                <div class="mt-5">
-                    <h3 class="text-center">Edited Images</h3>
-                    <div class="row mt-4">
-                        @foreach (var image in (List<string>)ViewData["EditedImages"])
-                        {
-                             <div class="col-md-4">
-                                <div class="card shadow-sm border-0 mb-4">
-                                    <img src="data:image/jpeg;base64,@image" alt="Edited Image" class="card-img-top rounded" />
-                                </div>
-                            </div>
-                        }
-                    </div>
+                <div class="alert alert-info">
+                    Yapay zeka kullanarak anında size özel antrenman ve beslenme planı almak için
+                    soldaki bilgilerinizi girin.
                 </div>
             }
         </div>
