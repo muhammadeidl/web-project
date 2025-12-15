@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace FitnessCenter.Models
 {
@@ -7,15 +7,14 @@ namespace FitnessCenter.Models
         public int CoachAvailabilityId { get; set; }
 
         [Required]
-        public DayOfWeek DayOfWeek { get; set; }
+        public GymDay DayOfWeek { get; set; }
 
-        [Required]
-        public TimeSpan StartTime { get; set; }
+        public bool IsClosed { get; set; } = false;
 
-        [Required]
-        public TimeSpan EndTime { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
 
         public int CoachId { get; set; }
-        public Coach Coach { get; set; }
+        public Coach? Coach { get; set; }
     }
 }
