@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FitnessCenter.Data;
@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FitnessCenter.Controllers
 {
-    [Authorize(Roles = "admin")]
     public class CoachController : Controller
     {
         private readonly SporSalonuDbContext _context;
@@ -24,6 +23,8 @@ namespace FitnessCenter.Controllers
         // ===========================
         //  LIST ALL COACHES
         // ===========================
+        [Authorize(Roles = "admin")]
+
         public IActionResult Index()
         {
             var coaches = _context.Coaches
@@ -48,7 +49,7 @@ namespace FitnessCenter.Controllers
                 CoachAvailabilities = Enumerable.Range(0, 7)
                     .Select(i => new CoachAvailability
                     {
-                        DayOfWeek = (FitnessCenter.Models.DayOfWeek)i
+                        DayOfWeek = (FitnessCenter.Models.GymDay)i
                     })
                     .ToList()
             };
@@ -65,20 +66,31 @@ namespace FitnessCenter.Controllers
         {
             ModelState.Remove("Gym");
             ModelState.Remove("Appointments");
+            ModelState.Remove("CoachTrainingPrograms");
+            ModelState.Remove("UnavailableSlots");
 
-            if (coach.CoachAvailabilities != null)
+            var avs = coach.CoachAvailabilities?.ToList() ?? new List<CoachAvailability>();
+
+            for (int i = 0; i < avs.Count; i++)
             {
-                // Remove navigation-related model state errors
-                for (int i = 0; i < coach.CoachAvailabilities.Count; i++)
-                {
-                    ModelState.Remove($"CoachAvailabilities[{i}].Coach");
-                }
+                ModelState.Remove($"CoachAvailabilities[{i}].Coach");
+                ModelState.Remove($"CoachAvailabilities[{i}].CoachId");
+                ModelState.Remove($"CoachAvailabilities[{i}].CoachAvailabilityId");
+                ModelState.Remove($"CoachAvailabilities[{i}].StartTime");
+                ModelState.Remove($"CoachAvailabilities[{i}].EndTime");
 
-                // Keep only rows where both times are set
-                coach.CoachAvailabilities = coach.CoachAvailabilities
-                    .Where(a => a.StartTime != TimeSpan.Zero && a.EndTime != TimeSpan.Zero)
-                    .ToList();
+                var av = avs[i];
+
+                if (av.IsClosed || !av.StartTime.HasValue || !av.EndTime.HasValue)
+                {
+                    av.IsClosed = true;
+                    av.StartTime = null;
+                    av.EndTime = null;
+                }
             }
+
+            // رجّعها للموديل (مهم)
+            coach.CoachAvailabilities = avs;
 
             if (!ModelState.IsValid)
             {
@@ -88,9 +100,10 @@ namespace FitnessCenter.Controllers
 
             _context.Coaches.Add(coach);
             _context.SaveChanges();
-
             return RedirectToAction(nameof(Index));
         }
+
+
 
         // ===========================
         //  EDIT (GET)
@@ -108,11 +121,11 @@ namespace FitnessCenter.Controllers
             // Ensure 7 days exist (fill missing days)
             var existingDays = coach.CoachAvailabilities != null
                 ? coach.CoachAvailabilities.Select(a => a.DayOfWeek).ToHashSet()
-                : new HashSet<FitnessCenter.Models.DayOfWeek>();
+                : new HashSet<FitnessCenter.Models.GymDay>();
 
             for (int i = 0; i < 7; i++)
             {
-                var day = (FitnessCenter.Models.DayOfWeek)i;
+                var day = (FitnessCenter.Models.GymDay)i;
                 if (!existingDays.Contains(day))
                 {
                     coach.CoachAvailabilities.Add(new CoachAvailability
@@ -139,67 +152,68 @@ namespace FitnessCenter.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Coach coach)
         {
-            if (ModelState.IsValid)
+            ModelState.Remove("Gym");
+            ModelState.Remove("Appointments");
+            ModelState.Remove("CoachTrainingPrograms");
+            ModelState.Remove("UnavailableSlots");
+
+            var avs = coach.CoachAvailabilities?.ToList() ?? new List<CoachAvailability>();
+
+            for (int i = 0; i < avs.Count; i++)
+            {
+                ModelState.Remove($"CoachAvailabilities[{i}].Coach");
+                ModelState.Remove($"CoachAvailabilities[{i}].CoachId");
+                ModelState.Remove($"CoachAvailabilities[{i}].CoachAvailabilityId");
+                ModelState.Remove($"CoachAvailabilities[{i}].StartTime");
+                ModelState.Remove($"CoachAvailabilities[{i}].EndTime");
+
+                var av = avs[i];
+
+                if (av.IsClosed || !av.StartTime.HasValue || !av.EndTime.HasValue)
+                {
+                    av.IsClosed = true;
+                    av.StartTime = null;
+                    av.EndTime = null;
+                }
+            }
+
+            coach.CoachAvailabilities = avs;
+
+            if (!ModelState.IsValid)
             {
                 ViewBag.Gyms = new SelectList(_context.Gyms, "GymId", "Name", coach.GymId);
                 return View(coach);
             }
-
-            ModelState.Remove("Gym");
-            ModelState.Remove("Appointments");
-
-            if (coach.CoachAvailabilities != null)
-            {
-                for (int i = 0; i < coach.CoachAvailabilities.Count; i++)
-                {
-                    ModelState.Remove($"CoachAvailabilities[{i}].Coach");
-                }
-
-                // Only keep rows where user entered both times
-                coach.CoachAvailabilities = coach.CoachAvailabilities
-                    .Where(a => a.StartTime != TimeSpan.Zero && a.EndTime != TimeSpan.Zero)
-                    .ToList();
-            }
-
-
 
             var existingCoach = _context.Coaches
                 .Include(e => e.CoachAvailabilities)
                 .FirstOrDefault(e => e.CoachId == coach.CoachId);
 
             if (existingCoach == null)
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
 
-            // Update scalar properties
             existingCoach.Name = coach.Name;
             existingCoach.Expertise = coach.Expertise;
             existingCoach.GymId = coach.GymId;
 
-            // Remove old availabilities
-            if (existingCoach.CoachAvailabilities != null && existingCoach.CoachAvailabilities.Any())
-            {
-                _context.CoachAvailability.RemoveRange(existingCoach.CoachAvailabilities);
-            }
+            _context.CoachAvailability.RemoveRange(existingCoach.CoachAvailabilities);
 
-            existingCoach.CoachAvailabilities = new List<CoachAvailability>();
-
-            // Add new availabilities
-            if (coach.CoachAvailabilities != null)
+            foreach (var av in avs.OrderBy(a => a.DayOfWeek))
             {
-                foreach (var availability in coach.CoachAvailabilities)
+                existingCoach.CoachAvailabilities.Add(new CoachAvailability
                 {
-                    existingCoach.CoachAvailabilities.Add(new CoachAvailability
-                    {
-                        DayOfWeek = availability.DayOfWeek,
-                        StartTime = availability.StartTime,
-                        EndTime = availability.EndTime
-                    });
-                }
+                    DayOfWeek = av.DayOfWeek,
+                    IsClosed = av.IsClosed,
+                    StartTime = av.StartTime,
+                    EndTime = av.EndTime
+                });
             }
 
             _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
+
+
 
         // ===========================
         //  DELETE (GET)
