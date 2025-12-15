@@ -15,9 +15,6 @@ namespace FitnessCenter.Controllers
         { 
             return View();
         }
-        public IActionResult AIHair()
-        {
-            return View();
-        }
+        
     }
 }
