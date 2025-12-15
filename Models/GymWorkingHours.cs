@@ -1,6 +1,6 @@
-﻿namespace FitnessCenter.Models
+namespace FitnessCenter.Models
 {
-    public enum DayOfWeek
+    public enum GymDay
     {
         Sunday,
         Monday,
@@ -14,11 +14,16 @@
     public class GymWorkingHours
     {
         public int Id { get; set; }
-        public DayOfWeek DayOfWeek { get; set; }
+        public GymDay DayOfWeek { get; set; }
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public bool IsClosed { get; set; }
         public int GymId { get; set; }
-        public Gym Gym { get; set; }
+        public Gym ?Gym { get; set; }
+
+
+
+     
+       
     }
 }
