@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using FitnessCenter.Models;
 
@@ -8,14 +8,16 @@ namespace FitnessCenter.Models
     {
         [Required]
         [MaxLength(50)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        // Role is already provided بواسطة IdentityUserRole
-        // لذلك الأفضل عدم استخدام “Role” كـ string
-        // لكن إذا تريد تبقيه، اجعله Claim وليس property
         [MaxLength(20)]
-        public string Role { get; set; }
+        //public string Role { get; set; } = string.Empty;
 
-        public ICollection<Appointment> Appointments { get; set; }
+        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
+
+
+
+
+
 }
