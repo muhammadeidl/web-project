@@ -1,10 +1,10 @@
-﻿using FitnessCenter.Data;
+using FitnessCenter.Data;
 using FitnessCenter.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FitnessCenter.Controllers
 {
@@ -12,33 +12,133 @@ namespace FitnessCenter.Controllers
     public class AppointmentController : Controller
     {
         private readonly SporSalonuDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public AppointmentController(SporSalonuDbContext context)
+        public AppointmentController(SporSalonuDbContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // ------------------ إجراءات خاصة بالإدمن فقط ------------------
-
+        // ============================================================
+        //  ADMIN LIST - All appointments
+        // ============================================================
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Index()
         {
             var appointments = await _context.Appointments
                 .Include(a => a.TrainingProgram)
                 .Include(a => a.Coach)
+                .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
             return View(appointments);
         }
 
+        // ============================================================
+        //  ADMIN LIST - Pending approvals only
+        // ============================================================
         [Authorize(Roles = "admin")]
+        public async Task<IActionResult> PendingApprovals()
+        {
+            var list = await _context.Appointments
+                .Include(a => a.TrainingProgram)
+                .Include(a => a.Coach)
+                .Where(a => a.Status == AppointmentStatus.Pending)
+                .OrderBy(a => a.AppointmentDate)
+                .ToListAsync();
+
+            return View(list);
+        }
+
+        // ============================================================
+        //  ADMIN APPROVE
+        // ============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var appt = await _context.Appointments
+                .Include(a => a.TrainingProgram)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+
+            if (appt == null) return NotFound();
+
+            if (appt.Status != AppointmentStatus.Pending)
+            {
+                TempData["Error"] = "Bu randevu zaten işlem görmüş.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
+            //  Overlap check (Confirmed ile çakışıyor mu?)
+            int duration = appt.TrainingProgram?.Duration ?? 0;
+            DateTime start = appt.AppointmentDate;
+            DateTime end = start.AddMinutes(duration);
+
+            bool conflict = await _context.Appointments
+                .Include(a => a.TrainingProgram)
+                .AnyAsync(a =>
+                    a.AppointmentId != appt.AppointmentId &&
+                    a.CoachId == appt.CoachId &&
+                    a.Status == AppointmentStatus.Confirmed &&
+                    a.AppointmentDate.Date == start.Date &&
+                    (
+                        start < a.AppointmentDate.AddMinutes(a.TrainingProgram.Duration) &&
+                        end > a.AppointmentDate
+                    )
+                );
+
+            if (conflict)
+            {
+                TempData["Error"] = "Bu saat için zaten onaylı bir randevu var.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
+            appt.Status = AppointmentStatus.Confirmed;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Randevu onaylandı.";
+            return RedirectToAction(nameof(PendingApprovals));
+        }
+
+        // ============================================================
+        //  ADMIN REJECT
+        // ============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var appt = await _context.Appointments.FindAsync(id);
+            if (appt == null) return NotFound();
+
+            if (appt.Status != AppointmentStatus.Pending)
+            {
+                TempData["Error"] = "Bu randevu zaten işlem görmüş.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
+            appt.Status = AppointmentStatus.Rejected;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Randevu reddedildi.";
+            return RedirectToAction(nameof(PendingApprovals));
+        }
+
+        // ============================================================
+        //  EDIT (GET) - Admin & Owner
+        // ============================================================
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
+            var userId = _userManager.GetUserId(User);
+
             var appointment = await _context.Appointments.FindAsync(id);
-            if (appointment == null)
-            {
-                return NotFound();
-            }
+            if (appointment == null) return NotFound();
+
+            if (!User.IsInRole("admin") && appointment.UserId != userId)
+                return RedirectToAction("AccessDenied", "User");
 
             ViewBag.TrainingPrograms = new SelectList(_context.TrainingPrograms, "TrainingProgramId", "Name", appointment.TrainingProgramId);
             ViewBag.Coaches = new SelectList(_context.Coaches, "CoachId", "Name", appointment.CoachId);
@@ -46,134 +146,117 @@ namespace FitnessCenter.Controllers
             return View(appointment);
         }
 
-        [Authorize(Roles = "admin")]
+        // ============================================================
+        //  EDIT (POST) - Admin & Owner
+        // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Appointment appointment)
         {
-            if (id != appointment.AppointmentId)
-            {
-                return NotFound();
-            }
+            if (id != appointment.AppointmentId) return NotFound();
 
-            // لا تنسى استعادة UserId للموعد إذا كان غير موجود في النموذج
-            var existingAppointment = await _context.Appointments.AsNoTracking().FirstOrDefaultAsync(a => a.AppointmentId == id);
-            if (existingAppointment != null)
-            {
-                appointment.UserId = existingAppointment.UserId;
-            }
+            var userId = _userManager.GetUserId(User);
 
+            var existing = await _context.Appointments
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+
+            if (existing == null) return NotFound();
+
+            if (!User.IsInRole("admin") && existing.UserId != userId)
+                return RedirectToAction("AccessDenied", "User");
+
+            // UserId sabit kalsın
+            appointment.UserId = existing.UserId;
+
+            // Admin değilse status’u değiştiremesin
+            if (!User.IsInRole("admin"))
+                appointment.Status = existing.Status;
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(appointment);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Appointments.Any(a => a.AppointmentId == id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                _context.Update(appointment);
+                await _context.SaveChangesAsync();
+
+                return User.IsInRole("admin")
+                    ? RedirectToAction(nameof(Index))
+                    : RedirectToAction("Dashboard", "User");
             }
 
             ViewBag.TrainingPrograms = new SelectList(_context.TrainingPrograms, "TrainingProgramId", "Name", appointment.TrainingProgramId);
             ViewBag.Coaches = new SelectList(_context.Coaches, "CoachId", "Name", appointment.CoachId);
-
             return View(appointment);
         }
 
-        // ------------------ إجراءات يمكن للمستخدم العادي الوصول إليها (تتطلب التحقق من الملكية) ------------------
-
+        // ============================================================
+        //  DELETE (GET)
+        // ============================================================
         public async Task<IActionResult> Delete(int id)
         {
-            string currentUserId = User.FindFirstValue("UserId");
+            var userId = _userManager.GetUserId(User);
 
             var appointment = await _context.Appointments
                 .Include(a => a.TrainingProgram)
                 .Include(a => a.Coach)
                 .FirstOrDefaultAsync(a => a.AppointmentId == id);
 
-            if (appointment == null)
-            {
-                return NotFound();
-            }
+            if (appointment == null) return NotFound();
 
-            // **الإصلاح (1): التحقق الأمني وتحديد مسار التوجيه إلى UserController**
-            if (appointment.UserId != currentUserId && !User.IsInRole("admin"))
-            {
+            if (appointment.UserId != userId && !User.IsInRole("admin"))
                 return RedirectToAction("Dashboard", "User");
-            }
 
             return View(appointment);
         }
 
+        // ============================================================
+        //  DELETE (POST)
+        // ============================================================
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            string currentUserId = User.FindFirstValue("UserId");
-
+            var userId = _userManager.GetUserId(User);
             var appointment = await _context.Appointments.FindAsync(id);
-            if (appointment != null)
-            {
-                // **الإصلاح (2): التحقق الأمني وتحديد مسار التوجيه إلى UserController**
-                if (appointment.UserId != currentUserId && !User.IsInRole("admin"))
-                {
-                    return RedirectToAction("Dashboard", "User");
-                }
 
-                _context.Appointments.Remove(appointment);
-                await _context.SaveChangesAsync();
-            }
+            if (appointment == null) return NotFound();
 
-            if (User.IsInRole("admin"))
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            else
-            {
+            if (appointment.UserId != userId && !User.IsInRole("admin"))
                 return RedirectToAction("Dashboard", "User");
-            }
+
+            _context.Appointments.Remove(appointment);
+            await _context.SaveChangesAsync();
+
+            return User.IsInRole("admin")
+                ? RedirectToAction(nameof(Index))
+                : RedirectToAction("Dashboard", "User");
         }
 
+        // ============================================================
+        //  CREATE (GET)
+        // ============================================================
         public IActionResult Create()
         {
-            string userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Create", "Appointment") });
-            }
-
             ViewBag.Gyms = new SelectList(_context.Gyms, "GymId", "Name");
-
             return View();
         }
 
+        // ============================================================
+        //  CREATE (POST) -  Pending approval
+        // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Appointment appointment, int gymId, int trainingprogramId, int coachId, DateTime appointmentDate, TimeSpan appointmentTime)
+        public async Task<IActionResult> Create(int gymId, int trainingprogramId, int coachId, DateTime appointmentDate, TimeSpan appointmentTime)
         {
-            string userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Create", "Appointment") });
-            }
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return RedirectToAction("Login", "User");
 
-            appointmentDate = appointmentDate.Date.Add(appointmentTime);
+            DateTime finalDateTime = appointmentDate.Date.Add(appointmentTime);
 
-            if (!IsTimeSlotAvailable(coachId, appointmentDate, trainingprogramId))
+            if (!IsTimeSlotAvailable(coachId, finalDateTime, trainingprogramId))
             {
-                TempData["Error"] = "The selected time slot is already blocked or conflicts with another appointment.";
-                return RedirectToAction(nameof(Create));
+                TempData["Error"] = "Bu saat uygun değil veya daha önce talep edilmiş.";
+                ViewBag.Gyms = new SelectList(_context.Gyms, "GymId", "Name");
+                return View();
             }
 
             var newAppointment = new Appointment
@@ -181,68 +264,57 @@ namespace FitnessCenter.Controllers
                 UserId = userId,
                 TrainingProgramId = trainingprogramId,
                 CoachId = coachId,
-                AppointmentDate = appointmentDate,
-                Status = AppointmentStatus.Confirmed
+                AppointmentDate = finalDateTime,
+                Status = AppointmentStatus.Pending // önemli
             };
 
             _context.Appointments.Add(newAppointment);
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = "Randevu talebiniz alındı. Admin onayı bekleniyor.";
             return RedirectToAction("Dashboard", "User");
         }
 
-        // **الإصلاح (3): تعديل منطق التحقق من التوافر لاستخدام كائنات DateTime الكاملة**
+        // ============================================================
+        //  HELPER: Availability check (Pending + Confirmed bloklar)
+        // ============================================================
         private bool IsTimeSlotAvailable(int coachId, DateTime appointmentDate, int trainingprogramId)
         {
-            var trainingprogram = _context.TrainingPrograms.Find(trainingprogramId);
-            if (trainingprogram == null) return false;
+            var program = _context.TrainingPrograms.Find(trainingprogramId);
+            if (program == null) return false;
 
-            int duration = trainingprogram.Duration;
-            DateTime newAppointmentEnd = appointmentDate.AddMinutes(duration);
+            int duration = program.Duration;
+            DateTime end = appointmentDate.AddMinutes(duration);
 
-            // 1. التحقق ضد الأوقات المحظورة (UnavailableSlots)
-            bool blocked = _context.UnavailableSlots.Any(us =>
-                us.CoachId == coachId &&
-                !(newAppointmentEnd <= us.StartTime || appointmentDate >= us.EndTime));
-
-            if (blocked) return false;
-
-            // 2. التحقق ضد المواعيد الأخرى المحجوزة (Appointments)
-            var existingAppointments = _context.Appointments
+            var existing = _context.Appointments
                 .Include(a => a.TrainingProgram)
                 .Where(a => a.CoachId == coachId &&
                             a.AppointmentDate.Date == appointmentDate.Date &&
-                            a.Status != AppointmentStatus.Cancelled)
+                            (a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Confirmed))
                 .ToList();
 
-            bool conflictWithExisting = existingAppointments.Any(a =>
+            bool hasConflict = existing.Any(a =>
             {
-                DateTime existingStart = a.AppointmentDate;
-                DateTime existingEnd = a.AppointmentDate.AddMinutes(a.TrainingProgram.Duration);
-
-                // منطق التحقق من التداخل: لا يوجد تداخل إذا كانت النهاية الجديدة <= البداية الموجودة OR البداية الجديدة >= النهاية الموجودة
-                return !(newAppointmentEnd <= existingStart || appointmentDate >= existingEnd);
+                var existingStart = a.AppointmentDate;
+                var existingEnd = existingStart.AddMinutes(a.TrainingProgram.Duration);
+                return (appointmentDate < existingEnd && end > existingStart);
             });
 
-            return !conflictWithExisting;
+            return !hasConflict;
         }
 
-        // ------------------ إجراءات الـ API ------------------
-
+        // ============================================================
+        //  API ENDPOINTS (AJAX)
+        // ============================================================
         [HttpGet]
         public async Task<IActionResult> GetTrainingProgramsByGym(int gymId)
         {
-            var trainingprograms = await _context.TrainingPrograms
+            var list = await _context.TrainingPrograms
                 .Where(s => s.GymId == gymId)
-                .Select(s => new {
-                    trainingprogramId = s.TrainingProgramId,
-                    name = s.Name,
-                    price = s.Price,
-                    duration = s.Duration
-                })
+                .Select(s => new { s.TrainingProgramId, s.Name, s.Price, s.Duration })
                 .ToListAsync();
 
-            return Json(trainingprograms);
+            return Json(list);
         }
 
         [HttpGet]
@@ -261,68 +333,56 @@ namespace FitnessCenter.Controllers
         {
             try
             {
-                date = date.Date;
+                var program = await _context.TrainingPrograms.FindAsync(trainingprogramId);
+                if (program == null) return BadRequest("Program not found");
+                int duration = program.Duration;
 
-                var trainingprogram = await _context.TrainingPrograms.FindAsync(trainingprogramId);
-                if (trainingprogram == null) return BadRequest("Training Program not found");
-
-                int duration = trainingprogram.Duration;
-
-                var dayOfWeek = (Models.DayOfWeek)((int)date.DayOfWeek);
+                var dayOfWeek = (GymDay)date.DayOfWeek;
 
                 var availability = await _context.CoachAvailability
-                    .Where(a => a.CoachId == coachId && a.DayOfWeek == dayOfWeek)
-                    .ToListAsync();
+                    .FirstOrDefaultAsync(c => c.CoachId == coachId && c.DayOfWeek == dayOfWeek);
 
-                if (!availability.Any())
-                    return Json(new List<object>());
+                if (availability == null) return Json(new List<string>());
 
-                var appointments = await _context.Appointments
+         //
+                if (availability.IsClosed || !availability.StartTime.HasValue || !availability.EndTime.HasValue)
+                    return Json(new List<string>());
+
+                var existingAppointments = await _context.Appointments
                     .Include(a => a.TrainingProgram)
-                    .Where(a =>
-                        a.CoachId == coachId &&
-                        a.AppointmentDate.Date == date.Date &&
-                        a.Status != AppointmentStatus.Cancelled)
+                    .Where(a => a.CoachId == coachId &&
+                                a.AppointmentDate.Date == date.Date &&
+                                (a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Confirmed))
                     .ToListAsync();
 
-                var booked = appointments.Select(a => new
+                var availableSlots = new List<string>();
+
+                TimeSpan currentSlot = availability.StartTime.Value;
+                TimeSpan endTime = availability.EndTime.Value;
+
+
+                while (currentSlot.Add(TimeSpan.FromMinutes(duration)) <= endTime)
                 {
-                    Start = a.AppointmentDate.TimeOfDay,
-                    End = a.AppointmentDate.TimeOfDay + TimeSpan.FromMinutes(a.TrainingProgram.Duration)
-                }).ToList();
+                    TimeSpan slotEnd = currentSlot.Add(TimeSpan.FromMinutes(duration));
 
-                var result = new List<object>();
-
-                foreach (var av in availability)
-                {
-                    var current = av.StartTime;
-
-                    while (current.Add(TimeSpan.FromMinutes(duration)) <= av.EndTime)
+                    bool isTaken = existingAppointments.Any(app =>
                     {
-                        var end = current.Add(TimeSpan.FromMinutes(duration));
+                        var appStart = app.AppointmentDate.TimeOfDay;
+                        var appEnd = appStart.Add(TimeSpan.FromMinutes(app.TrainingProgram.Duration));
+                        return (currentSlot < appEnd && slotEnd > appStart);
+                    });
 
-                        bool conflict = booked.Any(b =>
-                            !(end <= b.Start || current >= b.End));
+                    if (!isTaken)
+                        availableSlots.Add(currentSlot.ToString(@"hh\:mm"));
 
-                        if (!conflict)
-                        {
-                            result.Add(new
-                            {
-                                time = current.ToString(@"hh\:mm"),
-                                isAvailable = true
-                            });
-                        }
-
-                        current = current.Add(TimeSpan.FromMinutes(30));
-                    }
+                    currentSlot = currentSlot.Add(TimeSpan.FromMinutes(duration));
                 }
 
-                return Json(result);
+                return Json(availableSlots);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex);
-                return Json(new List<object>());
+                return Json(new List<string>());
             }
         }
     }
