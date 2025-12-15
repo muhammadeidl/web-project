@@ -1,4 +1,4 @@
-﻿using FitnessCenter.Data;
+using FitnessCenter.Data;
 using FitnessCenter.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +8,6 @@ using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 
 namespace FitnessCenter.Controllers
 {
-    [Authorize(Roles = "admin")]    
 
     public class TrainingProgramController : Controller
     {
@@ -18,6 +17,7 @@ namespace FitnessCenter.Controllers
         {
             _context = context;
         }
+        [Authorize(Roles = "admin")]
 
         public IActionResult Index()
         {
