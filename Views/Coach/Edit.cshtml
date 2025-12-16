@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model FitnessCenter.Models.Coach
@@ -7,7 +7,7 @@
      style="background: linear-gradient(to bottom, #6a11cb, #2575fc); padding-top: 100px;">
 
     <div class="card shadow-lg border-0"
-         style="width: 100%; max-width: 700px; border-radius: 20px; overflow: hidden;">
+         style="width: 100%; max-width: 900px; border-radius: 20px; overflow: hidden;">
 
         <div class="card-header bg-primary text-white text-center">
             <h3 class="mb-0">Edit Coach</h3>
@@ -39,47 +39,68 @@
                     <span asp-validation-for="GymId" class="text-danger"></span>
                 </div>
 
-                <h4 class="mt-4 text-secondary">Availability</h4>
-                <div class="row">
-                    @{
-                        var availabilities = Model.CoachAvailabilities.ToList();
-                    }
-                    @for (int i = 0; i < availabilities.Count; i++)
-                    {
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card border-light shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title text-primary">
-                                        @availabilities[i].DayOfWeek
-                                    </h5>
+                <h4 class="mb-3 text-light">Availability</h4>
 
-                                    <!-- Hidden DayOfWeek to preserve value on POST -->
-                                    <input type="hidden"
-                                           name="CoachAvailabilities[@i].DayOfWeek"
-                                           value="@((int)availabilities[i].DayOfWeek)" />
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered shadow-sm rounded bg-white">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Day</th>
+                                <th>Closed</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var avs = Model.CoachAvailabilities?.OrderBy(x => x.DayOfWeek).ToList()
+                                ?? new List<FitnessCenter.Models.CoachAvailability>();
+                            }
 
-                                    <div class="mb-3">
-                                        <label class="form-label">Start Time</label>
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                var day = (FitnessCenter.Models.GymDay)i;
+                                var av = avs.FirstOrDefault(x => x.DayOfWeek == day)
+                                ?? new FitnessCenter.Models.CoachAvailability { DayOfWeek = day };
+
+                                <tr>
+                                    <td class="align-middle">
+                                        <input type="hidden" name="CoachAvailabilities[@i].DayOfWeek" value="@((int)day)" />
+                                        <strong>@day</strong>
+                                    </td>
+
+                                    <td class="text-center align-middle">
+                                        <input type="hidden" name="CoachAvailabilities[@i].IsClosed" value="false" />
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               id="closed-@i"
+                                               name="CoachAvailabilities[@i].IsClosed"
+                                               value="true"
+                                               @(av.IsClosed ? "checked" : "")
+                                               onclick="toggleEditCoachDay(@i)" />
+                                    </td>
+
+                                    <td>
                                         <input type="time"
+                                               class="form-control shadow-sm"
+                                               id="startTime-@i"
                                                name="CoachAvailabilities[@i].StartTime"
-                                               value="@(availabilities[i].StartTime == TimeSpan.Zero
-                                                                                                          ? ""
-                                                                                                          : availabilities[i].StartTime.ToString(@"hh\:mm"))"
-                                           class="form-control shadow" />
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">End Time</label>
-                                    <input type="time"
-                                           name="CoachAvailabilities[@i].EndTime"
-                                           value="@(availabilities[i].EndTime == TimeSpan.Zero
-                                                                                                      ? ""
-                                                                                                      : availabilities[i].EndTime.ToString(@"hh\:mm"))"
-                                           class="form-control shadow" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    }
+                                               value="@(av.StartTime?.ToString(@"hh\:mm") ?? "")"
+                                               @(av.IsClosed ? "disabled" : "") />
+                                    </td>
+
+                                    <td>
+                                        <input type="time"
+                                               class="form-control shadow-sm"
+                                               id="endTime-@i"
+                                               name="CoachAvailabilities[@i].EndTime"
+                                               value="@(av.EndTime?.ToString(@"hh\:mm") ?? "")"
+                                               @(av.IsClosed ? "disabled" : "") />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="d-flex justify-content-center gap-3 mt-4">
@@ -88,6 +109,7 @@
                             style="background: #6a11cb; border: none; border-radius: 30px; padding: 10px 30px;">
                         Save Changes
                     </button>
+
                     <a asp-controller="Coach"
                        asp-action="Index"
                        class="btn btn-lg text-white"
@@ -99,3 +121,21 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function toggleEditCoachDay(i) {
+            const closed = document.getElementById(`closed-${i}`).checked;
+            const start = document.getElementById(`startTime-${i}`);
+            const end = document.getElementById(`endTime-${i}`);
+
+            start.disabled = closed;
+            end.disabled = closed;
+
+            if (closed) {
+                start.value = "";
+                end.value = "";
+            }
+        }
+    </script>
+}
