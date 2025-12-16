@@ -1,84 +1,227 @@
-﻿@{
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
 @model IEnumerable<FitnessCenter.Models.TrainingProgram>
 
-<div class="container py-5" style="background: linear-gradient(to bottom, #ffffff, #e3f2fd);">
-    <h2 class="text-center mb-4 display-5 fw-bold text-primary">Training Programs</h2>
+@{
+    ViewData["Title"] = "Training Programs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <span class="fw-light text-muted">Manage all Training Programs in the system</span>
-        <a href="/TrainingProgram/Create" class="btn btn-primary shadow-sm rounded-pill px-4">+ Add Training Program</a>
-    </div>
+<style>
+    /* ====== FORCE GLOBAL GRADIENT (ALWAYS VISIBLE) ====== */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
 
-    <div class="table-responsive shadow-sm rounded" style="overflow: hidden;">
-        <table class="table table-hover table-bordered align-middle text-center border-light bg-white">
-            <thead class="bg-primary text-white">
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Gym</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
+    body {
+        background: transparent !important;
+        position: relative;
+        min-height: 100vh;
+    }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+
+    /* ====== MAKE LAYOUT WRAPPERS TRANSPARENT (BOOTSTRAP) ====== */
+    main, .container, .container-fluid, .bg-light, .content, .content-wrapper,
+    .page-content, .wrapper, #wrapper {
+        background: transparent !important;
+    }
+
+    /* ====== MAIN CARD ====== */
+    .main-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f5f8fc 45%, #eaf1fb 100%) !important;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        padding: 30px;
+        margin-top: 50px;
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* ====== TABLE HEADER ====== */
+    .table thead {
+        background: linear-gradient(90deg, #111111, #1f1f1f) !important;
+        color: #ffc107 !important;
+    }
+
+        .table thead th {
+            border: none !important;
+        }
+
+    /* ====== NAME STYLE ====== */
+    .program-name {
+        color: #222;
+        font-weight: 800;
+    }
+
+    /* ====== TAG STYLE (for price/duration) ====== */
+    .info-tag {
+        background: linear-gradient(135deg, #ffffff, #f1f4f9) !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        border-radius: 10px;
+        font-size: 0.80rem;
+        padding: 7px 10px;
+        transition: all 0.2s ease;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .info-tag:hover {
+            background: linear-gradient(135deg, #fffbef, #ffffff) !important;
+            border-color: #ffc107 !important;
+        }
+
+    /* ====== ADD BUTTON ====== */
+    .btn-add {
+        background: linear-gradient(135deg, #ffc107, #ffda44) !important;
+        border: none !important;
+        color: #000 !important;
+        font-weight: 800;
+    }
+</style>
+
+<div class="container mb-5">
+    <div class="main-container">
+
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6">
+                <h2 class="display-6 fw-bold text-dark m-0">Training Programs</h2>
+                <p class="text-muted">Manage all training programs in the system</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a asp-action="Create" class="btn btn-add shadow-sm rounded-pill px-4 py-2">
+                    <i class="fas fa-plus-circle me-2"></i>+ Add Training Program
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No Training Programs found. Click "Add Training Program" to create a new record.</td>
+                        <th class="border-0 py-3 ps-4">Name</th>
+                        <th class="border-0 py-3 text-center">Price</th>
+                        <th class="border-0 py-3 text-center">Duration</th>
+                        <th class="border-0 py-3">Gym</th>
+                        <th class="border-0 py-3 text-end pe-4" style="min-width:200px;">Actions</th>
                     </tr>
-                }
-                else
-                {
-                    @foreach (var program in Model)
+                </thead>
+
+                <tbody>
+                    @if (Model == null || !Model.Any())
                     {
-                        <tr class="align-middle">
-                            <td class="fw-bold text-secondary">@program.Name</td>
-                            <td>@program.Price.ToString("C")</td>
-                            <td>@program.Duration minutes</td>
-                            <td>@(string.IsNullOrWhiteSpace(program.Gym?.Name) ? "<span class='text-muted fst-italic'>Not specified</span>" : program.Gym.Name)</td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="/TrainingProgram/Edit/@program.TrainingProgramId" class="btn btn-sm btn-outline-primary rounded-pill">Edit</a>
-                                    <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@program.TrainingProgramId">Delete</button>
-                                </div>
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/907/907717.png"
+                                     width="80" class="mb-3 opacity-50" />
+                                <p class="text-muted">No training programs found.</p>
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var program in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                             style="width:40px;height:40px;">
+                                            <i class="fas fa-clipboard-list text-secondary"></i>
+                                        </div>
+                                        <span class="program-name">@program.Name</span>
+                                    </div>
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="info-tag">
+                                        <i class="fas fa-dollar-sign text-secondary"></i>
+                                        @program.Price.ToString("0.00")
+                                    </span>
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="info-tag">
+                                        <i class="fas fa-clock text-secondary"></i>
+                                        @program.Duration min
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                        @(program.Gym?.Name ?? "Not specified")
+                                    </div>
+                                </td>
+
+                                <td class="text-end pe-4">
+                                    <div class="btn-group gap-2">
+                                        <a asp-action="Edit" asp-route-id="@program.TrainingProgramId"
+                                           class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                            Edit
+                                        </a>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal"
+                                                data-id="@program.TrainingProgramId">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
     </div>
 </div>
 
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<!-- ✅ DELETE MODAL (same vibe as Gyms/Coaches) -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-white border-0">
+                <h5 class="modal-title fw-bold">Confirm Deletion</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <p class="fs-5 text-secondary">Are you sure you want to delete this program?</p>
-                <p class="text-muted small">This action cannot be undone.</p>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-exclamation-triangle text-danger display-4 mb-3"></i>
+                <p class="fs-5">Are you sure you want to delete this program?</p>
+                <small class="text-muted">This action cannot be undone.</small>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="confirmDelete" class="btn btn-danger px-4 rounded-pill">Delete</a>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <a id="confirmDelete" class="btn btn-danger rounded-pill px-4 shadow-sm">Confirm Delete</a>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const deleteModal = document.getElementById('deleteModal');
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const programId = button.getAttribute('data-id');
-            const confirmDelete = deleteModal.querySelector('#confirmDelete');
-            confirmDelete.href = `/TrainingProgram/Delete/${programId}`;
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('deleteModal');
+            const confirmBtn = document.getElementById('confirmDelete');
+
+            if (modal && confirmBtn) {
+                modal.addEventListener('show.bs.modal', (e) => {
+                    const btn = e.relatedTarget;
+                    const id = btn.getAttribute('data-id');
+                    confirmBtn.href = `/TrainingProgram/Delete/${id}`;
+                });
+            }
         });
-    });
-</script>
+    </script>
+}
