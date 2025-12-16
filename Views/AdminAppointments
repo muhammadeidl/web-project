@@ -1,1 +1,69 @@
+@model List<FitnessCenter.Models.Appointment>
+@using FitnessCenter.Models
+
+@{
+    ViewData["Title"] = "Onay Bekleyen Randevular";
+}
+
+<h3>Onay Bekleyen Randevular</h3>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Koç</th>
+            <th>Program</th>
+            <th>Durum</th>
+            <th>İşlem</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.AppointmentDate.ToString("g")</td>
+                <td>@(a.Coach?.Name ?? "-")</td>
+                <td>@(a.TrainingProgram?.Name ?? "-")</td>
+                <td>
+                    @{
+                        var badgeClass = a.Status switch
+                        {
+                            AppointmentStatus.Pending => "bg-warning text-dark",
+                            AppointmentStatus.Confirmed => "bg-success",
+                            AppointmentStatus.Rejected => "bg-danger",
+                            AppointmentStatus.Cancelled => "bg-secondary",
+                            AppointmentStatus.Done => "bg-primary",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @badgeClass">
+                        @AppointmentStatusText.ToText(a.Status)
+                    </span>
+                </td>
+                <td class="d-flex gap-2">
+                    <form asp-action="Approve" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@a.AppointmentId" />
+                        <button class="btn btn-success btn-sm">Onayla</button>
+                    </form>
+
+                    <form asp-action="Reject" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@a.AppointmentId" />
+                        <button class="btn btn-danger btn-sm">Reddet</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
