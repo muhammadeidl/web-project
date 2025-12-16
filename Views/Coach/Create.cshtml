@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model FitnessCenter.Models.Coach
@@ -7,36 +7,28 @@
      style="background: linear-gradient(to bottom, #ffecd2, #fcb69f); padding-top: 100px;">
 
     <div class="card shadow-lg border-0"
-         style="width: 100%; max-width: 800px; border-radius: 20px; overflow: hidden;">
+         style="width: 100%; max-width: 900px; border-radius: 20px; overflow: hidden;">
 
         <div class="card-header bg-primary text-white text-center">
             <h3 class="mb-0">Add Coach</h3>
         </div>
 
         <div class="card-body p-4">
-            <form method="post"
-                  asp-controller="Coach"
-                  asp-action="Create"
-                  class="needs-validation"
-                  novalidate>
-
+            <form method="post" asp-controller="Coach" asp-action="Create">
                 @Html.AntiForgeryToken()
 
-                <!-- Name -->
                 <div class="mb-4">
                     <label asp-for="Name" class="form-label">Name</label>
                     <input type="text" asp-for="Name" class="form-control shadow" required />
                     <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
 
-                <!-- Expertise -->
                 <div class="mb-4">
                     <label asp-for="Expertise" class="form-label">Expertise</label>
                     <input type="text" asp-for="Expertise" class="form-control shadow" required />
                     <span asp-validation-for="Expertise" class="text-danger"></span>
                 </div>
 
-                <!-- Gym -->
                 <div class="mb-4">
                     <label asp-for="GymId" class="form-label">Gym</label>
                     <select asp-for="GymId" class="form-select shadow" asp-items="ViewBag.Gyms">
@@ -45,54 +37,92 @@
                     <span asp-validation-for="GymId" class="text-danger"></span>
                 </div>
 
-                <!-- Availability Section -->
-                <h4 class="mb-4 text-secondary">Availability</h4>
+                <h4 class="mb-3 text-secondary">Availability</h4>
 
-                <div class="row">
-                    @{
-                        var availabilities = Model.CoachAvailabilities?.ToList() ?? new List<FitnessCenter.Models.CoachAvailability>();
-                    }
-                    @for (int i = 0; i < availabilities.Count; i++)
-                    {
-                        <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card border-light shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title text-primary">
-                                        @availabilities[i].DayOfWeek
-                                    </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered shadow-sm rounded bg-white">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Day</th>
+                                <th>Closed</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var avs = Model.CoachAvailabilities?.OrderBy(x => x.DayOfWeek).ToList()
+                                ?? new List<FitnessCenter.Models.CoachAvailability>();
+                            }
 
-                                    <!-- Hidden DayOfWeek to bind correctly -->
-                                    <input type="hidden"
-                                           name="CoachAvailabilities[@i].DayOfWeek"
-                                           value="@((int)availabilities[i].DayOfWeek)" />
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                var day = (FitnessCenter.Models.GymDay)i;
+                                var av = avs.FirstOrDefault(x => x.DayOfWeek == day)
+                                ?? new FitnessCenter.Models.CoachAvailability { DayOfWeek = day };
 
-                                    <div class="mb-3">
-                                        <label class="form-label">Start Time</label>
+                                <tr>
+                                    <td class="align-middle">
+                                        <input type="hidden" name="CoachAvailabilities[@i].DayOfWeek" value="@((int)day)" />
+                                        <strong>@day</strong>
+                                    </td>
+
+                                    <td class="text-center align-middle">
+                                        <input type="hidden" name="CoachAvailabilities[@i].IsClosed" value="false" />
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               id="closed-@i"
+                                               name="CoachAvailabilities[@i].IsClosed"
+                                               value="true"
+                                               onclick="toggleCoachDay(@i)" />
+                                    </td>
+
+                                    <td>
                                         <input type="time"
-                                               name="CoachAvailabilities[@i].StartTime"
-                                               class="form-control shadow" />
-                                    </div>
+                                               class="form-control shadow-sm"
+                                               id="startTime-@i"
+                                               name="CoachAvailabilities[@i].StartTime" />
+                                    </td>
 
-                                    <div class="mb-3">
-                                        <label class="form-label">End Time</label>
+                                    <td>
                                         <input type="time"
-                                               name="CoachAvailabilities[@i].EndTime"
-                                               class="form-control shadow" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
+                                               class="form-control shadow-sm"
+                                               id="endTime-@i"
+                                               name="CoachAvailabilities[@i].EndTime" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
 
-                <!-- Submit -->
                 <div class="text-center mt-4">
                     <button type="submit" class="btn btn-lg btn-primary rounded-pill px-5">
                         Save
                     </button>
+                    <a href="/Coach" class="btn btn-lg btn-secondary rounded-pill px-5 ms-2">
+                        Cancel
+                    </a>
                 </div>
-
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function toggleCoachDay(i) {
+            const closed = document.getElementById(`closed-${i}`).checked;
+            const start = document.getElementById(`startTime-${i}`);
+            const end = document.getElementById(`endTime-${i}`);
+
+            start.disabled = closed;
+            end.disabled = closed;
+
+            if (closed) {
+                start.value = "";
+                end.value = "";
+            }
+        }
+    </script>
+}
