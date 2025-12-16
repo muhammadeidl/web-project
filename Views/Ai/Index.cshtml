@@ -3,6 +3,107 @@
 @{
     ViewData["Title"] = "AI Body Architect";
 }
+<style>
+    /* ====== FORCE GLOBAL GRADIENT (ALWAYS VISIBLE) ====== */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        background: transparent !important; 
+        position: relative;
+        min-height: 100vh;
+    }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+
+    /* ====== MAKE LAYOUT WRAPPERS TRANSPARENT (BOOTSTRAP) ====== */
+    main,
+    .container,
+    .container-fluid,
+    .bg-light,
+    .content,
+    .content-wrapper,
+    .page-content,
+    .wrapper,
+    #wrapper {
+        background: transparent !important;
+    }
+
+    /* ====== MAIN CARD ====== */
+    .main-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f5f8fc 45%, #eaf1fb 100%) !important;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        padding: 30px;
+        margin-top: 50px;
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* ====== TABLE HEADER ====== */
+    .table thead {
+        background: linear-gradient(90deg, #111111, #1f1f1f) !important;
+        color: #ffc107 !important;
+    }
+
+        .table thead th {
+            border: none !important;
+        }
+
+    /* ====== EXPERTISE TAG ====== */
+    .expertise-tag {
+        background: linear-gradient(135deg, #e8f1ff, #d6e4ff);
+        color: #0b3a6f;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 6px 14px;
+        border-radius: 12px;
+        border: 1px solid #b6d0ff;
+    }
+
+
+
+
+
+
+
+
+
+    /* ====== AVAILABILITY BADGE ====== */
+    .availability-badge {
+        background: linear-gradient(135deg, #ffffff, #f1f4f9) !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        padding: 7px 10px;
+        transition: all 0.2s ease;
+    }
+
+        .availability-badge:hover {
+            background: linear-gradient(135deg, #fffbef, #ffffff) !important;
+            border-color: #ffc107 !important;
+        }
+
+    .text-closed {
+        color: #dc3545;
+        font-weight: 800;
+    }
+
+    /* ====== ADD BUTTON ====== */
+    .btn-add {
+        background: linear-gradient(135deg, #ffc107, #ffda44) !important;
+        border: none !important;
+        color: #000 !important;
+        font-weight: 800;
+    }
+</style>
 
 <div class="container mt-5">
     <div class="row">
@@ -12,7 +113,8 @@
                     <h4><i class="fa fa-robot"></i> AI Antrenör</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Index" method="post">
+                    <form asp-action="Index" method="post" enctype="multipart/form-data">
+
                         <div class="mb-3">
                             <label>Yaş</label>
                             <input asp-for="Age" class="form-control" type="number" required />
@@ -38,15 +140,23 @@
 
                         <div class="mb-3">
                             <label>Spor Hedefiniz</label>
-                            <input asp-for="Goal"
-                                   class="form-control"
-                                   placeholder="Örn: Kilo vermek, kas yapmak..."
-                                   required />
+                            <input asp-for="Goal" class="form-control" placeholder="Örn: Kilo vermek, kas yapmak..." required />
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100">
-                            Planı Al
-                        </button>
+                        
+                        <div class="mb-3">
+                            <label>Fotoğraf (Opsiyonel)</label>
+                            <input asp-for="Photo" type="file" class="form-control" accept="image/*" />
+                            <small class="text-muted">Vücut fotoğrafı eklerseniz öneriler daha kişisel olur.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ek bilgi yazınız</label>
+                            <textarea asp-for="ExtraNote" class="form-control" rows="3"
+                                      placeholder="Örn: Haftada 3 gün spor yapabilirim, dizimde ağrı var, ekipman yok..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">Planı Al</button>
                     </form>
                 </div>
             </div>
@@ -69,8 +179,7 @@
             else
             {
                 <div class="alert alert-info">
-                    Yapay zeka kullanarak anında size özel antrenman ve beslenme planı almak için
-                    soldaki bilgilerinizi girin.
+                    Yapay zeka kullanarak anında size özel antrenman ve beslenme planı almak için soldaki bilgilerinizi girin.
                 </div>
             }
         </div>
