@@ -1,0 +1,150 @@
+@using FitnessCenter.Models
+@model IEnumerable<FitnessCenter.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Pending Approvals";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        background: transparent !important;
+        position: relative;
+        min-height: 100vh;
+    }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+
+    main, .container, .container-fluid, .bg-light, .content, .content-wrapper, .page-content, .wrapper, #wrapper {
+        background: transparent !important;
+    }
+
+    .main-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f5f8fc 45%, #eaf1fb 100%) !important;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        padding: 30px;
+        margin-top: 50px;
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    .table thead {
+        background: linear-gradient(90deg, #111111, #1f1f1f) !important;
+        color: #ffc107 !important;
+    }
+
+        .table thead th {
+            border: none !important;
+        }
+
+    .btn-add {
+        background: linear-gradient(135deg, #ffc107, #ffda44) !important;
+        border: none !important;
+        color: #000 !important;
+        font-weight: 800;
+    }
+</style>
+
+<div class="container mb-5">
+    <div class="main-container">
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <h2 class="display-6 fw-bold text-dark m-0">Pending Approvals</h2>
+                <p class="text-muted">Approve or reject pending appointment requests</p>
+            </div>
+
+            <div class="col-md-6 text-md-end">
+                <a asp-controller="Appointment" asp-action="Index"
+                   class="btn btn-outline-dark shadow-sm rounded-pill px-4 py-2">
+                    Back to All
+                </a>
+            </div>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger shadow-sm">@TempData["Error"]</div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success shadow-sm">@TempData["Success"]</div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th class="border-0 py-3 ps-4">Training Program</th>
+                        <th class="border-0 py-3">Coach</th>
+                        <th class="border-0 py-3">Date &amp; Time</th>
+                        <th class="border-0 py-3 text-center">Status</th>
+                        <th class="border-0 py-3 text-end pe-4" style="min-width:260px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                                     width="80" class="mb-3 opacity-50" />
+                                <p class="text-muted">No pending appointments.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var a in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold text-secondary">@(a.TrainingProgram?.Name ?? "N/A")</td>
+                                <td>@(a.Coach?.Name ?? "N/A")</td>
+                                <td>@a.AppointmentDate.ToString("g")</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">
+                                        @AppointmentStatusText.ToText(a.Status)
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <form asp-controller="Appointment" asp-action="Approve" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@a.AppointmentId" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                                Approve
+                                            </button>
+                                        </form>
+
+                                        <form asp-controller="Appointment" asp-action="Reject" method="post" class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to reject this appointment?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@a.AppointmentId" />
+                                            <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+</div>
