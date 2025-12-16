@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model FitnessCenter.Models.Coach
@@ -39,9 +39,10 @@
                                     <li class="list-group-item d-flex justify-content-between">
                                         <span>@availability.DayOfWeek</span>
                                         <span>
-                                            @availability.StartTime.ToString(@"hh\:mm")
+                                            @(availability.StartTime?.ToString(@"hh\:mm") ?? "")
                                             -
-                                            @availability.EndTime.ToString(@"hh\:mm")
+                                            @(availability.EndTime?.ToString(@"hh\:mm") ?? "")
+
                                         </span>
                                     </li>
                                 }
