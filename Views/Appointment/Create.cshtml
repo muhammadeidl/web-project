@@ -1,7 +1,10 @@
-﻿@{
+@using FitnessCenter.Models
+@model FitnessCenter.Models.Appointment
+
+@{
+    ViewData["Title"] = "Book Appointment";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-@model FitnessCenter.Models.Appointment
 
 @if (TempData["Error"] != null)
 {
@@ -15,21 +18,22 @@
         <div class="card-header text-white text-center" style="background: #2ebf91;">
             <h3 class="mb-0">Book an Appointment</h3>
         </div>
+
         <div class="card-body p-5">
             <form asp-controller="Appointment" asp-action="Create" method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                 <div class="row mb-4">
+                    <!-- ✅ Gym (: name="gymId"  asp-for) -->
                     <div class="col-md-4">
-                        <label asp-for="TrainingProgram.Gym.GymId" class="form-label">Gym</label>
-                        <select asp-for="TrainingProgram.Gym.GymId" class="form-select shadow" asp-items="ViewBag.Gyms" id="gymId">
+                        <label class="form-label">Gym</label>
+                        <select name="gymId" class="form-select shadow" asp-items="ViewBag.Gyms" id="gymId">
                             <option value="">-- Select Gym --</option>
                         </select>
-                        <span asp-validation-for="TrainingProgram.Gym.GymId" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-4">
-                        <label asp-for="TrainingProgramId" class="form-label">TrainingProgram</label>
+                        <label asp-for="TrainingProgramId" class="form-label">Training Program</label>
                         <select asp-for="TrainingProgramId" class="form-select shadow" id="trainingprogramId">
                             <option value="">-- Select Training Program --</option>
                         </select>
@@ -75,7 +79,7 @@
                     </div>
                 </div>
 
-                <input asp-for="AppointmentDate" type="hidden" id="completeAppointmentDateTime" />
+                <!-- ✅  hidden  ( Model Binding) -->
 
                 <div class="d-flex justify-content-center gap-3 mt-4">
                     <button type="submit" class="btn btn-lg text-white" style="background: #8360c3; border: none; border-radius: 30px; padding: 10px 30px;">
@@ -91,7 +95,6 @@
 </div>
 
 @section Scripts {
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
@@ -113,7 +116,7 @@
                 if (minutes < 60) return `${minutes} minutes`;
                 const hours = Math.floor(minutes / 60);
                 const m = minutes % 60;
-                return `${hours} hour${hours>1?'s':''}${m ? ' ' + m + ' minutes' : ''}`;
+                return `${hours} hour${hours > 1 ? 's' : ''}${m ? ' ' + m + ' minutes' : ''}`;
             }
 
             function setDefaultOption(selectElement, text = '-- Select --') {
@@ -124,38 +127,33 @@
                 selectElement.add(opt);
             }
 
-            // When gym changes → load training programs
+            // 1) Gym change -> load programs
             gymSelect.addEventListener('change', async function () {
                 const gymId = this.value;
 
-                if (!gymId) {
-                    setDefaultOption(trainingprogramSelect, '-- Select Training Program --');
-                    setDefaultOption(coachSelect, '-- Select Coach --');
-                    trainingprogramPriceElement.textContent = '--';
-                    trainingprogramDurationElement.textContent = '--';
-                    return;
-                }
+                setDefaultOption(trainingprogramSelect, '-- Select Training Program --');
+                setDefaultOption(coachSelect, '-- Select Coach --');
+                trainingprogramPriceElement.textContent = '--';
+                trainingprogramDurationElement.textContent = '--';
+                setDefaultOption(timeSelect, '-- Select Coach and Date First --');
+                timeSelect.disabled = true;
+
+                if (!gymId) return;
 
                 const res = await fetch(`/Appointment/GetTrainingProgramsByGym?gymId=${gymId}`);
                 programsData = await res.json();
 
-                setDefaultOption(trainingprogramSelect, '-- Select Training Program --');
                 programsData.forEach(p => {
                     const option = document.createElement('option');
-                    option.value = p.trainingprogramId;
-                    option.text = `${p.name} (${formatPrice(p.price)} - ${formatDuration(p.duration)})`;
+                    option.value = p.trainingProgramId;
+                    option.text = p.name;
                     trainingprogramSelect.add(option);
                 });
-
-                setDefaultOption(coachSelect, '-- Select Coach --');
-                trainingprogramPriceElement.textContent = '--';
-                trainingprogramDurationElement.textContent = '--';
             });
 
-            // When training program changes → show price + duration + load coaches
+            // 2) Program change -> show price/duration + load coaches
             trainingprogramSelect.addEventListener('change', async function () {
-
-                const selectedProgram = programsData.find(p => p.trainingprogramId == this.value);
+                const selectedProgram = programsData.find(p => p.trainingProgramId == this.value);
 
                 if (selectedProgram) {
                     trainingprogramPriceElement.textContent = formatPrice(selectedProgram.price);
@@ -165,43 +163,51 @@
                     trainingprogramDurationElement.textContent = '--';
                 }
 
-                const gymId = gymSelect.value;
-
-                if (this.value && gymId) {
-                    const res = await fetch(`/Appointment/GetCoachesByTrainingProgramAndGym?gymId=${gymId}&trainingprogramId=${this.value}`);
-                    const coaches = await res.json();
-
-                    setDefaultOption(coachSelect, '-- Select Coach --');
-                    coaches.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.coachId;
-                        opt.text = c.name;
-                        coachSelect.add(opt);
-                    });
-                }
-
+                setDefaultOption(coachSelect, '-- Select Coach --');
                 setDefaultOption(timeSelect, '-- Select Coach and Date First --');
+                timeSelect.disabled = true;
+
+                const gymId = gymSelect.value;
+                if (!this.value || !gymId) return;
+
+                const res = await fetch(`/Appointment/GetCoachesByTrainingProgramAndGym?gymId=${gymId}&trainingprogramId=${this.value}`);
+                const coaches = await res.json();
+
+                coaches.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.coachId;
+                    opt.text = c.name;
+                    coachSelect.add(opt);
+                });
             });
 
+            // 3) Update available time slots
             async function updateTimeSlots() {
                 const coachId = coachSelect.value;
                 const trainingprogramId = trainingprogramSelect.value;
                 const date = dateInput.value;
 
+                setDefaultOption(timeSelect, '-- Select Time --');
+                timeSelect.disabled = true;
+
                 if (!coachId || !trainingprogramId || !date) {
                     setDefaultOption(timeSelect, '-- Select all fields above --');
-                    timeSelect.disabled = true;
                     return;
                 }
 
                 const res = await fetch(`/Appointment/GetAvailableTimeSlots?coachId=${coachId}&date=${date}&trainingprogramId=${trainingprogramId}`);
-                const slots = await res.json();
+                const slots = await res.json(); // ["09:00", "10:00"]
+
+                if (!slots || slots.length === 0) {
+                    setDefaultOption(timeSelect, '-- No slots available --');
+                    return;
+                }
 
                 setDefaultOption(timeSelect, '-- Select Time --');
-                slots.forEach(s => {
+                slots.forEach(timeString => {
                     const option = document.createElement('option');
-                    option.value = s.time;
-                    option.text = s.time;
+                    option.value = timeString;
+                    option.text = timeString;
                     timeSelect.add(option);
                 });
 
@@ -212,163 +218,4 @@
             dateInput.addEventListener('change', updateTimeSlots);
         });
     </script>
-
-
-
-   @*  <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const gymSelect = document.getElementById('gymId');
-            const trainingprogramSelect = document.getElementById('trainingprogramId');
-            const coachSelect = document.getElementById('coachId');
-            const trainingprogramPriceElement = document.getElementById('trainingprogramPrice');
-            const trainingprogramDurationElement = document.getElementById('trainingprogramDuration');
-            const dateInput = document.getElementById('appointmentDate');
-            const timeSelect = document.getElementById('appointmentTime');
-
-            let programsData = [];
-
-            function formatPrice(price) {
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
-            }
-
-            function formatDuration(minutes) {
-                if (minutes < 60) {
-                    return `${minutes} minutes`;
-                }
-                const hours = Math.floor(minutes / 60);
-                const remainingMinutes = minutes % 60;
-                return `${hours} hour${hours > 1 ? 's' : ''}${remainingMinutes ? ` ${remainingMinutes} minutes` : ''}`;
-            }
-
-            function setDefaultOption(selectElement, text = '-- Select --') {
-                selectElement.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.text = text;
-                defaultOption.value = '';
-                selectElement.add(defaultOption);
-            }
-
-            async function updateTimeSlots() {
-                const coachId = coachSelect.value;
-                const trainingprogramId = trainingprogramSelect.value;
-                const date = dateInput.value;
-
-                if (!coachId || !trainingprogramId || !date) {
-                    timeSelect.disabled = true;
-                    setDefaultOption(timeSelect, '-- Select all fields above --');
-                    return;
-                }
-
-                timeSelect.disabled = true;
-                timeSelect.innerHTML = '<option value="">Loading...</option>';
-
-                try {
-                    const response = await fetch(`/Appointment/GetAvailableTimeSlots?coachId=${coachId}&date=${date}&trainingprogramId=${trainingprogramId}`);
-                    if (!response.ok) throw new Error('Failed to fetch time slots');
-                    const timeSlots = await response.json();
-
-                    setDefaultOption(timeSelect, '-- Select Time --');
-                    timeSlots.forEach(slot => {
-                        const option = document.createElement('option');
-                        const timeString = new Date(`2000-01-01T${slot.time}`).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        option.value = slot.time;
-                        option.text = timeString;
-
-                        if (!slot.isAvailable) {
-                            option.disabled = true;
-                            option.classList.add('text-muted', 'bg-light');
-                        }
-
-                        timeSelect.add(option);
-                    });
-
-                    timeSelect.disabled = false;
-                } catch (error) {
-                    console.error('Error fetching time slots:', error);
-                    setDefaultOption(timeSelect, '-- Error loading time slots --');
-                }
-            }
-
-            gymSelect.addEventListener('change', async function () {
-                const gymId = this.value;
-                if (gymId) {
-                    try {
-                        const response = await fetch(`/Appointment/GetTrainingProgramsByGym?gymId=${gymId}`);
-                        if (!response.ok) throw new Error('Failed to fetch trainingprograms');
-                        const data = await response.json();
-
-                        trprogramsData = data;
-                        setDefaultOption(trainingprogramSelect, '-- Select Training Program --');
-                        data.forEach(trainingprogram => {
-                            const option = document.createElement('option');
-                            option.text = `${trainingprogram.name} (${formatPrice(trainingprogram.price)} - ${formatDuration(trainingprogram.duration)})`;
-                            option.value = trainingprogram.trainingprogramId;
-                            trainingprogramSelect.add(option);
-                        });
-                        setDefaultOption(coachSelect, '-- Select Coach --');
-                        trainingprogramPriceElement.textContent = '--';
-                        trainingprogramDurationElement.textContent = '--';
-                    } catch (error) {
-                        console.error('Error fetching trainingprograms:', error);
-                        setDefaultOption(trainingprogramSelect, '-- No TrainingPrograms Available --');
-                    }
-                } else {
-                    setDefaultOption(trainingprogramSelect, '-- Select TrainingProgram --');
-                    setDefaultOption(coachSelect, '-- Select Coach --');
-                    trainingprogramPriceElement.textContent = '--';
-                    trainingprogramDurationElement.textContent = '--';
-                }
-            });
-
-            trainingprogramSelect.addEventListener('change', async function () {
-                const selectedProgram = trainingprogramsData.find(s => s.trainingprogramId == this.value);
-                if (selectedProgram) {
-                    trainingprogramPriceElement.textContent = formatPrice(selectedTrainingProgram.price);
-                    trainingprogramDurationElement.textContent = formatDuration(selectedTrainingProgram.duration);
-                } else {
-                    trainingprogramPriceElement.textContent = '--';
-                    trainingprogramDurationElement.textContent = '--';
-                }
-
-                const gymId = gymSelect.value;
-                if (this.value && gymId) {
-                    try {
-                        const response = await fetch(`/Appointment/GetCoachesByTrainingProgramAndGym?gymId=${gymId}&trainingprogramId=${this.value}`);
-                        if (!response.ok) throw new Error('Failed to fetch coaches');
-                        const data = await response.json();
-
-                        setDefaultOption(coachSelect, '-- Select Coach --');
-                        data.forEach(coach => {
-                            const option = document.createElement('option');
-                            option.text = coach.name;
-                            option.value = coach.coachId;
-                            coachSelect.add(option);
-                        });
-                    } catch (error) {
-                        console.error('Error fetching coaches:', error);
-                        setDefaultOption(coachSelect, '-- No Coaches Available --');
-                    }
-                } else {
-                    setDefaultOption(coachSelect, '-- Select Coach --');
-                }
-
-                setDefaultOption(timeSelect, '-- Select Coach and Date First --');
-            });
-
-            if (dateInput) {
-                const today = new Date();
-                const maxDate = new Date();
-                maxDate.setMonth(maxDate.getMonth() + 3);
-
-                dateInput.min = today.toISOString().split('T')[0];
-                dateInput.max = maxDate.toISOString().split('T')[0];
-            }
-
-            coachSelect.addEventListener('change', updateTimeSlots);
-            dateInput.addEventListener('change', updateTimeSlots);
-        });
-    </script> *@
 }
