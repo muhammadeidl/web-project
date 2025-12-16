@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @model FitnessCenter.Models.Gym
@@ -47,7 +47,7 @@
                         <tbody>
                             @for (int i = 0; i < 7; i++)
                             {
-                                var day = (FitnessCenter.Models.DayOfWeek)i;
+                                var day = (FitnessCenter.Models.GymDay)i;
                                 var wh = Model.WorkingHours.FirstOrDefault(x => x.DayOfWeek == day)
                                 ?? new FitnessCenter.Models.GymWorkingHours { DayOfWeek = day };
 
