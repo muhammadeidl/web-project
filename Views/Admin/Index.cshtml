@@ -1,131 +1,222 @@
-﻿@{
+@{
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IronFit Admin</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    /* ====== FORCE GLOBAL GRADIENT (ALWAYS VISIBLE) ====== */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    body {
+        background: transparent !important;
+        position: relative;
+        min-height: 100vh;
+    }
 
-    <style>
-        .text-gradient {
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            color: transparent;
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
         }
 
-        .icon-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
+    main, .container, .container-fluid, .bg-light, .content, .content-wrapper, .page-content, .wrapper, #wrapper {
+        background: transparent !important;
+    }
+
+    /* ====== MAIN CARD (SAME AS GYMS/COACHES) ====== */
+    .main-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f5f8fc 45%, #eaf1fb 100%) !important;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        padding: 30px;
+        margin-top: 50px;
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* ====== SECTION TITLE ====== */
+    .page-title {
+        font-weight: 900;
+        letter-spacing: .5px;
+    }
+
+    /* ====== ACTION BUTTON (SAME STYLE LOGIC) ====== */
+    .btn-add {
+        background: linear-gradient(135deg, #ffc107, #ffda44) !important;
+        border: none !important;
+        color: #000 !important;
+        font-weight: 800;
+    }
+
+    /* ====== DASH CARDS ====== */
+    .dash-card {
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 18px;
+        background: rgba(255,255,255,0.85);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        overflow: hidden;
+    }
+
+        .dash-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 35px rgba(0,0,0,0.12);
+            border-color: rgba(255,193,7,0.55);
         }
 
-        .card-hover:hover {
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    .icon-circle {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        border: 1px solid rgba(255,255,255,0.55);
+    }
+
+    .card-sub {
+        color: #6c757d;
+        font-size: .92rem;
+    }
+
+    /* unified button look */
+    .card-btn {
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 10px 14px;
+    }
+
+    .btn-soft-dark {
+        border: 1px solid rgba(0,0,0,0.2);
+        color: #111;
+        background: #fff;
+    }
+
+        .btn-soft-dark:hover {
+            border-color: rgba(0,0,0,0.35);
+            background: #f8f9fa;
         }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand text-gradient fw-bold" href="#">IronFit Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <form asp-controller="User" asp-action="Login" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+</style>
+
+<div class="container mb-5">
+    <div class="main-container">
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-7">
+                <h2 class="display-6 page-title text-dark m-0">Dashboard Overview</h2>
+                <p class="text-muted mb-0">Quick access to the admin tools</p>
+            </div>
+
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <a asp-controller="Home" asp-action="Index"
+                   class="btn btn-add shadow-sm rounded-pill px-4 py-2">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
             </div>
         </div>
-    </nav>
 
-    <section class="admin-panel">
-        <div class="container py-5">
-            <h1 class="text-center display-4 text-gradient mb-5">Dashboard Overview</h1>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card card-hover shadow-sm border-0">
-                        <div class="card-body text-center">
-                            <div class="icon-circle bg-primary text-white mb-3">
-                                <i class="fas fa-user-ninja fa-2x"></i>
-                            </div>
-                            <h4 class="card-title">Manage Coaches</h4>
-                            <p class="text-muted">Add, edit, or view coaches</p>
-                            <a asp-controller="Coach" asp-action="Index" class="btn btn-primary w-100">
-                                Go to Coaches
-                            </a>
+        <div class="row g-4 mt-2">
+
+            <!-- Coaches -->
+            <div class="col-md-4">
+                <div class="dash-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-circle" style="background: linear-gradient(135deg,#0d6efd,#4facfe); color:#fff;">
+                            <i class="fas fa-user-ninja fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Manage Coaches</h5>
+                            <div class="card-sub">Add, edit, or view coaches</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card card-hover shadow-sm border-0">
-                        <div class="card-body text-center">
-                            <div class="icon-circle bg-success text-white mb-3">
-                                <i class="fas fa-building fa-2x"></i>
-                            </div>
-                            <h4 class="card-title">Gym Details</h4>
-                            <p class="text-muted">View or update gym information!</p>
-                            <a asp-controller="Gym" asp-action="Index" class="btn btn-success w-100">
-                                Go to Gym
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card card-hover shadow-sm border-0">
-                        <div class="card-body text-center">
-                            <div class="icon-circle bg-warning text-white mb-3">
-                                <i class="fas fa-dumbbell fa-2x"></i>
-                            </div>
-                            <h4 class="card-title">Training Programs</h4>
-                            <p class="text-muted">Manage gym programs & classes</p>
-                            <a asp-controller="TrainingProgram" asp-action="Index" class="btn btn-warning text-white w-100">
-                                Go to Training Programs
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card card-hover shadow-sm border-0">
-                        <div class="card-body text-center">
-                            <div class="icon-circle bg-info text-white mb-3">
-                                <i class="fas fa-calendar-check fa-2x"></i>
-                            </div>
-                            <h4 class="card-title">Manage Bookings(Appointments)</h4>
-                            <p class="text-muted">Edit, view, or manage sessions</p>
-                            <a asp-controller="Appointment" asp-action="Index" class="btn btn-info text-white w-100">
-                                Go to Bookings (Appointments)
-                            </a>
-                        </div>
-                    </div>
+                    <a asp-controller="Coach" asp-action="Index"
+                       class="btn btn-soft-dark w-100 card-btn">
+                        Go to Coaches
+                    </a>
                 </div>
             </div>
+
+            <!-- Gyms -->
+            <div class="col-md-4">
+                <div class="dash-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-circle" style="background: linear-gradient(135deg,#198754,#2ecc71); color:#fff;">
+                            <i class="fas fa-building fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Gym Details</h5>
+                            <div class="card-sub">View or update gym information</div>
+                        </div>
+                    </div>
+                    <a asp-controller="Gym" asp-action="Index"
+                       class="btn btn-soft-dark w-100 card-btn">
+                        Go to Gyms
+                    </a>
+                </div>
+            </div>
+
+            <!-- Training Programs -->
+            <div class="col-md-4">
+                <div class="dash-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-circle" style="background: linear-gradient(135deg,#ffc107,#ffda44); color:#111;">
+                            <i class="fas fa-dumbbell fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Training Programs</h5>
+                            <div class="card-sub">Manage gym programs &amp; classes</div>
+                        </div>
+                    </div>
+                    <a asp-controller="TrainingProgram" asp-action="Index"
+                       class="btn btn-soft-dark w-100 card-btn">
+                        Go to Training Programs
+                    </a>
+                </div>
+            </div>
+
+            <!-- Appointments -->
+            <div class="col-md-4">
+                <div class="dash-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-circle" style="background: linear-gradient(135deg,#0dcaf0,#00f2fe); color:#0b3a6f;">
+                            <i class="fas fa-calendar-check fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Manage Appointments</h5>
+                            <div class="card-sub">Edit, view, or manage sessions</div>
+                        </div>
+                    </div>
+                    <a asp-controller="Appointment" asp-action="Index"
+                       class="btn btn-soft-dark w-100 card-btn">
+                        Go to Appointments
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="col-md-4">
+                <div class="dash-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="icon-circle" style="background: linear-gradient(135deg,#111,#2b2b2b); color:#fff;">
+                            <i class="fas fa-chart-line fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Reports (REST API)</h5>
+                            <div class="card-sub">Filtering &amp; listing via API</div>
+                        </div>
+                    </div>
+                    <a asp-controller="Reports" asp-action="Index"
+                       class="btn btn-soft-dark w-100 card-btn">
+                        Go to Reports
+                    </a>
+                </div>
+            </div>
+
         </div>
-    </section>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-
-//
+    </div>
+</div>
