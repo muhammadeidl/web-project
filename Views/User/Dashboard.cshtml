@@ -1,54 +1,200 @@
-﻿@{
-    ViewData["Title"] = "Dashboard";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
 @using FitnessCenter.Models
 @model IEnumerable<FitnessCenter.Models.Appointment>
 
-<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 50px; font-family: 'Arial', sans-serif;">
-    <h2 style="font-size: 36px; font-weight: bold; color: #4A90E2; text-align: center; margin-bottom: 30px;">Your Booked Appointments</h2>
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
-    <a asp-controller="Appointment" asp-action="Create"
-       style="background-color: #4A90E2; color: white; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 12px; display: inline-block; transition: background-color 0.3s ease; margin-bottom: 20px;">
-        Add New Appointment
-    </a>
+<style>
+    /* ====== FORCE GLOBAL GRADIENT (ALWAYS VISIBLE) ====== */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
 
-    <div style="overflow-x: auto; width: 90%;">
-        <table id="appointmentsTable" style="width: 100%; border-collapse: collapse; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;">
-            <thead>
-                <tr style="background-color: #4A90E2; color: white;">
-                    <th style="padding: 10px;">Appointment ID</th>
-                    <th style="padding: 10px;">Date & Time</th>
-                    <th style="padding: 10px;">Program Name</th>
-                    <th style="padding: 10px;">Coach Name</th>
-                    <th style="padding: 10px;">Status</th>
-                    <th style="padding: 10px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Any())
-                {
-                    @foreach (var appointment in Model)
+    body {
+        background: transparent !important;
+        position: relative;
+        min-height: 100vh;
+    }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+
+    main, .container, .container-fluid, .bg-light, .content, .content-wrapper, .page-content, .wrapper, #wrapper {
+        background: transparent !important;
+    }
+
+    /* ====== MAIN CARD ====== */
+    .main-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f5f8fc 45%, #eaf1fb 100%) !important;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        padding: 30px;
+        margin-top: 50px;
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* ====== TABLE HEADER (DARK + GOLD LIKE OTHERS) ====== */
+    .table thead {
+        background: linear-gradient(90deg, #111111, #1f1f1f) !important;
+        color: #ffc107 !important;
+    }
+
+        .table thead th {
+            border: none !important;
+        }
+
+    /* ====== BLUE ACCENT (KEEP YOUR BLUE) ====== */
+    .title-blue {
+        color: #1e6bff;
+        font-weight: 900;
+        letter-spacing: .3px;
+    }
+
+    .btn-blue {
+        background: linear-gradient(135deg, #1e6bff, #4facfe) !important;
+        border: none !important;
+        color: #fff !important;
+        font-weight: 800;
+    }
+
+    /* ====== STATUS BADGES ====== */
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: .8rem;
+        border: 1px solid rgba(0,0,0,0.08);
+        background: #fff;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+    }
+
+    .st-pending {
+        color: #8a5a00;
+        background: linear-gradient(135deg,#fff3cd,#ffe69c);
+        border-color: #ffe8a1;
+    }
+
+    .st-confirmed {
+        color: #0f5132;
+        background: linear-gradient(135deg,#d1e7dd,#bfe6d6);
+        border-color: #badbcc;
+    }
+
+    .st-rejected {
+        color: #842029;
+        background: linear-gradient(135deg,#f8d7da,#f3b8bf);
+        border-color: #f5c2c7;
+    }
+
+    .st-cancelled {
+        color: #41464b;
+        background: linear-gradient(135deg,#e2e3e5,#d3d6d8);
+        border-color: #d3d6d8;
+    }
+
+    .st-done {
+        color: #0b3a6f;
+        background: linear-gradient(135deg,#e8f1ff,#d6e4ff);
+        border-color: #b6d0ff;
+    }
+
+    /* ====== ACTION BUTTONS ====== */
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container mb-5">
+    <div class="main-container">
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <h2 class="display-6 title-blue m-0">Your Booked Appointments</h2>
+                <p class="text-muted mb-0">Manage your sessions and track their status</p>
+            </div>
+
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a asp-controller="Appointment" asp-action="Create"
+                   class="btn btn-blue shadow-sm btn-pill px-4 py-2">
+                    <i class="fas fa-plus-circle me-2"></i> Add New Appointment
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center">
+                <thead>
+                    <tr>
+                        <th class="border-0 py-3">Appointment ID</th>
+                        <th class="border-0 py-3">Date &amp; Time</th>
+                        <th class="border-0 py-3">Program Name</th>
+                        <th class="border-0 py-3">Coach Name</th>
+                        <th class="border-0 py-3">Status</th>
+                        <th class="border-0 py-3">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model != null && Model.Any())
                     {
-                        <tr style="border-bottom: 1px solid #ddd; text-align: center;">
-                            <td style="padding: 10px;">@appointment.AppointmentId</td>
-                            <td style="padding: 10px;">@appointment.AppointmentDate.ToString("g")</td>
-                            <td style="padding: 10px;">@(appointment.TrainingProgram?.Name ?? "N/A")</td>
-                            <td style="padding: 10px;">@(appointment.Coach?.Name ?? "N/A")</td>
-                            <td style="padding: 10px;">@appointment.Status</td>
-                            <td style="padding: 10px;">
-                                <a href="/Appointment/Delete/@appointment.AppointmentId" style="background-color: #D0021B; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; text-decoration: none;">
-                                    Delete
-                                </a>
+                        foreach (var appointment in Model)
+                        {
+                            var statusClass = appointment.Status switch
+                            {
+                                AppointmentStatus.Pending => "st-pending",
+                                AppointmentStatus.Confirmed => "st-confirmed",
+                                AppointmentStatus.Rejected => "st-rejected",
+                                AppointmentStatus.Cancelled => "st-cancelled",
+                                AppointmentStatus.Done => "st-done",
+                                _ => "st-cancelled"
+                            };
+
+                            <tr>
+                                <td class="fw-bold">@appointment.AppointmentId</td>
+                                <td>@appointment.AppointmentDate.ToString("g")</td>
+                                <td class="fw-semibold text-secondary">@(appointment.TrainingProgram?.Name ?? "N/A")</td>
+                                <td>@(appointment.Coach?.Name ?? "N/A")</td>
+                                <td>
+                                    <span class="status-badge @statusClass">
+                                        @AppointmentStatusText.ToText(appointment.Status)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-controller="Appointment" asp-action="Edit" asp-route-id="@appointment.AppointmentId"
+                                           class="btn btn-sm btn-outline-dark btn-pill px-3">
+                                            Edit
+                                        </a>
+                                        <a asp-controller="Appointment" asp-action="Delete" asp-route-id="@appointment.AppointmentId"
+                                           class="btn btn-sm btn-outline-danger btn-pill px-3">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="py-5 text-muted">
+                                No appointments found.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr style="text-align: center;"><td colspan="6" style="padding: 20px; color: #888;">No appointments found.</td></tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 </div>
