@@ -1,10 +1,8 @@
-
 using FitnessCenter.Data;
 using FitnessCenter.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace FitnessCenter.Controllers
 {
@@ -16,8 +14,8 @@ namespace FitnessCenter.Controllers
         {
             _context = context;
         }
-        [Authorize(Roles = "admin")]
 
+        [Authorize(Roles = "admin")]
         public IActionResult Index()
         {
             var gyms = _context.Gyms
@@ -28,7 +26,7 @@ namespace FitnessCenter.Controllers
         }
 
         // ============================
-        // CREATE (GET & POST)
+        // OLUŞTUR (GET & POST)
         // ============================
         [HttpGet]
         public IActionResult Create()
@@ -67,7 +65,7 @@ namespace FitnessCenter.Controllers
                         ModelState.Remove($"WorkingHours[{i}].StartTime");
                         ModelState.Remove($"WorkingHours[{i}].EndTime");
                     }
-                    // 
+                    // 🛑 IsClosed seçilmemiş olsa bile model bağlama hatalarını temizle
                     else
                     {
                         ModelState.Remove($"WorkingHours[{i}].StartTime");
@@ -88,7 +86,7 @@ namespace FitnessCenter.Controllers
 
 
         // =============================
-        // EDIT (GET)
+        // DÜZENLE (GET)
         // =============================
         [HttpGet]
         public IActionResult Edit(int id)
@@ -101,23 +99,23 @@ namespace FitnessCenter.Controllers
         }
 
         // =============================
-        // EDIT (POST)
+        // DÜZENLE (POST)
         // =============================
         [HttpPost]
         public IActionResult Edit(Gym gym)
         {
+            // 1. İlk denemede doğrulamanın başarılı olması için ModelState'i temizle
             ModelState.Remove("GymId");
 
             if (gym.WorkingHours != null)
             {
                 for (int i = 0; i < gym.WorkingHours.Count; i++)
-                
                 {
                     var wh = gym.WorkingHours[i];
 
                     ModelState.Remove($"WorkingHours[{i}].Gym");
                     ModelState.Remove($"WorkingHours[{i}].GymId");
-                    ModelState.Remove($"WorkingHours[{i}].Id");  
+                    ModelState.Remove($"WorkingHours[{i}].Id"); // EF izleme hatalarını önlemek için Id'yi kaldır
 
                     if (wh.IsClosed)
                     {
@@ -125,17 +123,25 @@ namespace FitnessCenter.Controllers
                         wh.EndTime = null;
                     }
 
+                    // 🛑 En güçlü çözüm: Her durumda zaman bağlama hatalarını temizle.
+                    // Bu gereklidir çünkü model bağlayıcı boş dizeyi ("") TimeSpan? türüne dönüştürmeye çalışır ve başarısız olur.
+                    // Bağlama başarısızlığını aşmak için StartTime ve EndTime hatalarını manuel olarak kaldırıyoruz.
                     ModelState.Remove($"WorkingHours[{i}].StartTime");
                     ModelState.Remove($"WorkingHours[{i}].EndTime");
                 }
             }
 
+            // 🛑 2. Temizlendikten sonra modelin geçerliliğini kontrol et
             if (!ModelState.IsValid)
             {
+                // Doğrulama başarısız olursa, hataları göstermek için View'a geri dön (Sadece İsim ve Konum)
                 return View(gym);
             }
 
 
+            // ---------------------------------
+            // Kaydetme ve Güncelleme Mantığı
+            // ---------------------------------
 
             var existingGym = _context.Gyms
                 .Include(g => g.WorkingHours)
@@ -147,6 +153,7 @@ namespace FitnessCenter.Controllers
             existingGym.Name = gym.Name;
             existingGym.Location = gym.Location;
 
+            // Eski çalışma saatlerini sil ve yenilerini ekle
             _context.GymWorkingHours.RemoveRange(existingGym.WorkingHours);
 
             foreach (var wh in gym.WorkingHours)
@@ -161,11 +168,12 @@ namespace FitnessCenter.Controllers
             }
 
             _context.SaveChanges();
+            // Başarıyla kaydedildikten sonra Index'e yönlendir (PRG deseni)
             return RedirectToAction("Index");
         }
 
         // =============================
-        // DELETE (GET)
+        // SİL (GET)
         // =============================
         [HttpGet]
         public IActionResult Delete(int id)
@@ -178,7 +186,7 @@ namespace FitnessCenter.Controllers
         }
 
         // =============================
-        // DELETE (POST)
+        // SİL (POST)
         // =============================
         [HttpPost, ActionName("Delete")]
         public IActionResult DeleteConfirmed(int id)
