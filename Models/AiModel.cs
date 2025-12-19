@@ -21,13 +21,20 @@ namespace FitnessCenter.Models
         [MaxLength(200)]
         public string Goal { get; set; } = "";
 
+        //  New: Additional Note
         [MaxLength(500)]
         public string? ExtraNote { get; set; }
 
+        // New: Optional Photo
         public IFormFile? Photo { get; set; }
 
+        // AI Generation Result (Text Plan)
         public string? AiResponse { get; set; }
+        
         public string? PhotoPath { get; set; }
 
+        //  Add this new property 
+        // This variable will hold the generated image data in Base64 format to be displayed directly in the view.
+        public string? GeneratedImageUrl { get; set; }
     }
 }
