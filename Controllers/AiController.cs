@@ -7,14 +7,14 @@ using System.Text;
 
 namespace FitnessCenter.Controllers
 {
-    // ✅ Ensure that the role here matches the one in the database (usually "member" rather than "visitor")
+    //  Ensure that the role here matches the one in the database (usually "member" rather than "visitor")
     [Authorize(Roles = "member")]
     public class AiController : Controller
     {
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
 
-        // ✅ Inject IConfiguration to access keys within appsettings.json
+        //  Inject IConfiguration to access keys within appsettings.json
         public AiController(IConfiguration configuration)
         {
             _configuration = configuration;
@@ -37,13 +37,13 @@ namespace FitnessCenter.Controllers
             try
             {
                 // 1. Fetch Gemini key from the correct path in appsettings.json
-                string geminiKey = _configuration["GeminiSettings:ApiKey"]; // ✅ Corrected path
+                string geminiKey = _configuration["GeminiSettings:ApiKey"]; //  Corrected path
 
                 string textPrompt = GenerateTextPrompt(model);
                 model.AiResponse = await GetGeminiResponse(textPrompt, geminiKey);
 
                 // 2. Fetch Stability key from the correct path and generate the image
-                string stabilityKey = _configuration["StabilitySettings:ApiKey"]; // ✅ Corrected path
+                string stabilityKey = _configuration["StabilitySettings:ApiKey"]; //  Corrected path
 
                 string imagePrompt = GenerateImagePrompt(model);
                 string base64Image = await GetStabilityAiImage(imagePrompt, stabilityKey);
@@ -84,7 +84,7 @@ namespace FitnessCenter.Controllers
             return sb.ToString();
         }
 
-        // ✅ New Method: Generate a descriptive prompt for the Stability AI image generation
+        //  New Method: Generate a descriptive prompt for the Stability AI image generation
         private string GenerateImagePrompt(AiModel model)
         {
             // Crafting an English description for the image model to understand.
@@ -134,7 +134,7 @@ namespace FitnessCenter.Controllers
             return $"Error communicating with Gemini API. Status: {response.StatusCode}";
         }
 
-        // ✅ New Method: Connect to Stability AI to generate the body simulation image
+        //  New Method: Connect to Stability AI to generate the body simulation image
         private async Task<string?> GetStabilityAiImage(string prompt, string apiKey)
         {
             if (string.IsNullOrEmpty(apiKey)) return null;
