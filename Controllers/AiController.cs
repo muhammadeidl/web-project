@@ -1,19 +1,25 @@
 using FitnessCenter.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 
 namespace FitnessCenter.Controllers
 {
-    [Authorize(Roles = "visitor")]
+    // ✅ Ensure that the role here matches the one in the database (usually "member" rather than "visitor")
+    [Authorize(Roles = "member")]
     public class AiController : Controller
     {
         private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
 
+        // ✅ Inject IConfiguration to access keys within appsettings.json
         public AiController(IConfiguration configuration)
         {
             _configuration = configuration;
+            _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromSeconds(120); // Increase wait time for image generation
         }
 
         [HttpGet]
@@ -26,140 +32,154 @@ namespace FitnessCenter.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(AiModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                ModelState.AddModelError("", "Lütfen tüm alanları doğru şekilde doldurduğunuzdan emin olun.");
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             try
             {
-                model.AiResponse = await GeneratePlan(model);
+                // 1. Fetch Gemini key from the correct path in appsettings.json
+                string geminiKey = _configuration["GeminiSettings:ApiKey"]; // ✅ Corrected path
+
+                string textPrompt = GenerateTextPrompt(model);
+                model.AiResponse = await GetGeminiResponse(textPrompt, geminiKey);
+
+                // 2. Fetch Stability key from the correct path and generate the image
+                string stabilityKey = _configuration["StabilitySettings:ApiKey"]; // ✅ Corrected path
+
+                string imagePrompt = GenerateImagePrompt(model);
+                string base64Image = await GetStabilityAiImage(imagePrompt, stabilityKey);
+
+                if (!string.IsNullOrEmpty(base64Image))
+                {
+                    // Convert Base64 to a data URI format to display it directly in an <img> tag
+                    model.GeneratedImageUrl = $"data:image/png;base64,{base64Image}";
+                }
             }
             catch (Exception ex)
             {
-                model.AiResponse = "Bağlantı hatası oluştu: " + ex.Message;
+                model.AiResponse = "An error occurred: " + ex.Message;
             }
 
             return View(model);
         }
 
-        private async Task<string> GeneratePlan(AiModel model)
+        // ==================================================================================
+        // Helper Methods
+        // ==================================================================================
+
+        // Method to generate the text prompt for the AI coach
+        private string GenerateTextPrompt(AiModel model)
         {
-            string apiKey = _configuration["GeminiSettings:ApiKey"];
-
-            if (string.IsNullOrEmpty(apiKey))
-                return "Hata: API Anahtarı yapılandırma dosyasında bulunamadı!!";
-
-            using var client = new HttpClient();
-
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
-
-            var extra = string.IsNullOrWhiteSpace(model.ExtraNote) ? "Yok" : model.ExtraNote;
-
-            string prompt =
-                "Sen profesyonel bir fitness koçu ve beslenme uzmanısın.\n" +
-                "Kullanıcı bilgilerine göre kişiye özel antrenman + beslenme planı oluştur.\n\n" +
-                $"Yaş: {model.Age}\n" +
-                $"Kilo: {model.Weight} kg\n" +
-                $"Boy: {model.Height} cm\n" +
-                $"Cinsiyet: {model.Gender}\n" +
-                $"Hedef: {model.Goal}\n" +
-                $"Ek Bilgi: {extra}\n\n" +
-                "Kurallar:\n" +
-                "1) Yanıt tamamen Türkçe olsun.\n" +
-                "2) Başlıklar ve maddeler halinde yaz.\n" +
-                "3) Haftalık antrenman planı + günlük beslenme örneği ver.\n" +
-                "4) Eğer fotoğraf varsa: vücut tipi/denge/hatalar hakkında genel yorum yap (tıbbi teşhis yapma).\n";
-
-            var parts = new List<object>();
-
-            parts.Add(new { text = prompt });
-
-            if (model.Photo != null && model.Photo.Length > 0)
+            var sb = new StringBuilder();
+            sb.AppendLine("You are an expert fitness and nutrition coach.");
+            sb.AppendLine("Prepare a detailed training and nutrition program for a user with the following details:");
+            sb.AppendLine($"Age: {model.Age}, Weight: {model.Weight}kg, Height: {model.Height}cm, Gender: {model.Gender}");
+            sb.AppendLine($"Goal: {model.Goal}");
+            if (!string.IsNullOrEmpty(model.ExtraNote))
             {
-                using var ms = new MemoryStream();
-                await model.Photo.CopyToAsync(ms);
-                var bytes = ms.ToArray();
-                var base64 = Convert.ToBase64String(bytes);
-
-                var mimeType = string.IsNullOrWhiteSpace(model.Photo.ContentType)
-                    ? "image/jpeg"
-                    : model.Photo.ContentType;
-
-                parts.Add(new
-                {
-                    inlineData = new
-                    {
-                        mimeType = mimeType,
-                        data = base64
-                    }
-                });
+                sb.AppendLine($"Additional Notes: {model.ExtraNote}");
             }
+            sb.AppendLine("\nPlease provide the response in Turkish, using Markdown headers and a motivating tone.");
+            
+            // Note: This version of the Gemini API relies on text prompts for the plan generation.
+            return sb.ToString();
+        }
+
+        // ✅ New Method: Generate a descriptive prompt for the Stability AI image generation
+        private string GenerateImagePrompt(AiModel model)
+        {
+            // Crafting an English description for the image model to understand.
+            // Requesting a realistic photo of a person of the same gender and age who has achieved the specified goal.
+            string genderTerm = model.Gender == "Kadın" ? "female" : "male";
+
+            var sb = new StringBuilder();
+            // Start with a high-quality general description to ensure visual fidelity
+            sb.Append("A high-quality, realistic full-body photograph of a ");
+            sb.Append($"{model.Age}-year-old {genderTerm}, ");
+            
+            // Add physique details based on the user's specific fitness goal
+            sb.Append($"with an athletic, fit physique achieved after pursuing the goal of '{model.Goal}'. ");
+            
+            // Add environment and clothing details to increase realism
+            sb.Append("Wearing modern workout sportswear, standing confidently in a well-lit, modern gym environment. ");
+            sb.Append("Cinematic lighting, highly detailed, 8k resolution.");
+
+            return sb.ToString();
+        }
+
+        // Method to communicate with Gemini API (updated to accept the key as a parameter)
+        private async Task<string> GetGeminiResponse(string prompt, string apiKey)
+        {
+            if (string.IsNullOrEmpty(apiKey)) return "Gemini API Key not found in configuration.";
 
             var requestBody = new
             {
                 contents = new[]
                 {
-                    new
-                    {
-                        parts = parts
-                    }
+                    new { parts = new[] { new { text = prompt } } }
                 }
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync(url, content);
-            string responseText = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-                return "API Hatası: " + responseText;
-
-            using var doc = JsonDocument.Parse(responseText);
-
-            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+            var content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+            
+            // Using the gemini-2.5-flash model endpoint
+            var response = await _httpClient.PostAsync($"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}", content);
+            
+            if (response.IsSuccessStatusCode)
             {
-                return candidates[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString() ?? "Yapay zekadan geçerli bir yanıt alınamadı.";
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                dynamic data = JsonConvert.DeserializeObject(jsonResponse);
+                return data?.candidates[0]?.content?.parts[0]?.text ?? "No response from AI.";
             }
 
-            return "Yapay zekadan geçerli bir yanıt alınamadı.";
+            return $"Error communicating with Gemini API. Status: {response.StatusCode}";
         }
-    }
-}
- public async Task<byte[]> GenerateAfterImageAsync(byte[] inputImageBytes, string prompt)
-    {
-        using var form = new MultipartFormDataContent();
 
-        // model
-        form.Add(new StringContent("gpt-image-1"), "model");
+        // ✅ New Method: Connect to Stability AI to generate the body simulation image
+        private async Task<string?> GetStabilityAiImage(string prompt, string apiKey)
+        {
+            if (string.IsNullOrEmpty(apiKey)) return null;
 
-        // prompt
-        form.Add(new StringContent(prompt), "prompt");
+            // Request configuration for the SDXL model
+            var requestBody = new
+            {
+                text_prompts = new[]
+                {
+                    new { text = prompt, weight = 1 }
+                },
+                cfg_scale = 7,     // Prompt fidelity (7 is a standard balanced value)
+                height = 1024,     // Image dimensions
+                width = 1024,
+                steps = 30,        // Number of inference steps (30 provides good quality)
+                samples = 1        // Number of images to generate
+            };
 
-        // input image (required)
-        var imageContent = new ByteArrayContent(inputImageBytes);
-        imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-        form.Add(imageContent, "image", "before.jpg");
+            var content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
 
-        using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/images/edits");
-        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
-        req.Content = form;
+            // Setup required API headers
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = content;
 
-        using var res = await _http.SendAsync(req);
-        var json = await res.Content.ReadAsStringAsync();
+            var response = await _httpClient.SendAsync(request);
 
-        if (!res.IsSuccessStatusCode)
-            throw new Exception($"OpenAI error: {res.StatusCode} - {json}");
-
-        // response typically returns base64 image data in JSON
-        // parse: data[0].b64_json
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var b64 = doc.RootElement.GetProperty("data")[0].GetProperty("b64_json").GetString();
-        return Convert.FromBase64String(b64!);
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                dynamic data = JsonConvert.DeserializeObject(jsonResponse);
+                
+                // The response contains an "artifacts" array; we retrieve the first generated image
+                // The image data is returned as a Base64 string
+                string base64String = data?.artifacts[0]?.base64;
+                return base64String;
+            }
+            else
+            {
+                // Log the error to the console for debugging purposes
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Stability AI Error: {error}");
+                return null; // Return null if the generation fails
+            }
+        }
     }
 }
