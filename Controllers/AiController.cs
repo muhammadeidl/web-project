@@ -131,3 +131,35 @@ namespace FitnessCenter.Controllers
         }
     }
 }
+ public async Task<byte[]> GenerateAfterImageAsync(byte[] inputImageBytes, string prompt)
+    {
+        using var form = new MultipartFormDataContent();
+
+        // model
+        form.Add(new StringContent("gpt-image-1"), "model");
+
+        // prompt
+        form.Add(new StringContent(prompt), "prompt");
+
+        // input image (required)
+        var imageContent = new ByteArrayContent(inputImageBytes);
+        imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+        form.Add(imageContent, "image", "before.jpg");
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/images/edits");
+        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
+        req.Content = form;
+
+        using var res = await _http.SendAsync(req);
+        var json = await res.Content.ReadAsStringAsync();
+
+        if (!res.IsSuccessStatusCode)
+            throw new Exception($"OpenAI error: {res.StatusCode} - {json}");
+
+        // response typically returns base64 image data in JSON
+        // parse: data[0].b64_json
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var b64 = doc.RootElement.GetProperty("data")[0].GetProperty("b64_json").GetString();
+        return Convert.FromBase64String(b64!);
+    }
+}
