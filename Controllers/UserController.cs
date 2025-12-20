@@ -76,71 +76,7 @@ namespace FitnessCenter.Controllers
 
 
 
-        // ---------------- REGISTER ----------------
-
-        //[AllowAnonymous]
-        //[HttpGet]
-        //public IActionResult Register()
-        //{
-        //    return View();
-        //}
-
-        //[AllowAnonymous]
-        //[HttpPost]
-        //public async Task<IActionResult> Register(string name, string email, string password)
-        //{
-        //    if (string.IsNullOrWhiteSpace(name) ||
-        //        string.IsNullOrWhiteSpace(email) ||
-        //        string.IsNullOrWhiteSpace(password))
-        //    {
-        //        ModelState.AddModelError("", "Please fill in all fields.");
-        //        return View();
-        //    }
-
-        //    if (await _userManager.FindByEmailAsync(email) != null)
-        //    {
-        //        ModelState.AddModelError("", "User already exists with this email.");
-        //        return View();
-        //    }
-
-        //    var newUser = new User
-        //    {
-        //        UserName = email,
-        //        Email = email,
-        //        Name = name
-        //    };
-
-        //    var result = await _userManager.CreateAsync(newUser, password);
-        //    if (!result.Succeeded)
-        //    {
-        //        // Show Identity errors for better debugging
-        //        foreach (var err in result.Errors)
-        //            ModelState.AddModelError("", err.Description);
-
-        //        return View();
-        //    }
-
-        //    // Assign Identity role (visitor) - this is the real role system
-        //    await _userManager.AddToRoleAsync(newUser, "visitor");
-
-        //    await _signInManager.SignInAsync(newUser, isPersistent: false);
-
-        //    return RedirectToAction("Dashboard");
-        //}
-
-        // ---------------- LOGOUT ----------------
-
-        //[Authorize]
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Logout()
-        //{
-        //    await _signInManager.SignOutAsync();
-        //    return RedirectToAction("Index", "Home");
-        //}
-
-        // ---------------- DASHBOARD ----------------
-        public async Task<IActionResult> Dashboard()
+     public async Task<IActionResult> Dashboard()
         {
             var currentUserId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(currentUserId))
