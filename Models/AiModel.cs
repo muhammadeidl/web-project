@@ -9,10 +9,10 @@ namespace FitnessCenter.Models
         public int Age { get; set; }
 
         [Range(1, 500)]
-        public int Weight { get; set; } // kg
+        public int Weight { get; set; }
 
         [Range(50, 250)]
-        public int Height { get; set; } // cm
+        public int Height { get; set; }
 
         [Required]
         public string Gender { get; set; } = "Erkek";
@@ -21,20 +21,24 @@ namespace FitnessCenter.Models
         [MaxLength(200)]
         public string Goal { get; set; } = "";
 
-        //  New: Additional Note
         [MaxLength(500)]
         public string? ExtraNote { get; set; }
 
-        // New: Optional Photo
+        // Optional photo
         public IFormFile? Photo { get; set; }
 
-        // AI Generation Result (Text Plan)
+        // Plan
         public string? AiResponse { get; set; }
-        
-        public string? PhotoPath { get; set; }
 
-        //  Add this new property 
-        // This variable will hold the generated image data in Base64 format to be displayed directly in the view.
+        // Duration (months)
+        [Range(1, 24)]
+        public int DurationMonths { get; set; } = 6;
+
+        // BEFORE + AFTER for UI
+        public string? UploadedImageUrl { get; set; }
         public string? GeneratedImageUrl { get; set; }
+
+        // For showing image errors nicely
+        public string? ImageError { get; set; }
     }
 }
